@@ -48,7 +48,8 @@ MXZMG="$MXRD/split_img/boot.img-kernel"
 DTBTOOL="$RDIR/tools/dtbTool"
 MKBOOTIMG="/usr/bin/mkbootimg"
 OLDCFG="$RDIR/oldconfigs"
-
+MXPREFIX="machinexlite-Mark"
+MXSUFFIX="-hltetmo"
 QUICKHOUR="$(date +%l | cut -d " " -f2)"
 QUICKMIN="$(date +%S)"
 QUICKAMPM="$(date +%p)"
@@ -401,13 +402,13 @@ handle_existing() {
 		warnandfail "FATAL ERROR! Failed to read version from .oldversion"
 	fi
 
-	if [ ! -f "$RDIR/machinexlite-Mark$OLDVER-hltetmo.zip" ]
+	if [ ! -f "$RDIR/$MXPREFIX$OLDVER$MXSUFFIX.zip" ]
 	then
 		echo "Version Override!"
 		echo "Previous version was not completed!"
 		echo "Rebuilding old version"
-		MX_KERNEL_VERSION="machinexlite-Mark$OLDVER-hltetmo"
-	elif [ "$LASTZIP" = "machinexlite-Mark$OLDVER-hltetmo.zip" ]
+		MX_KERNEL_VERSION="$MXPREFIX$OLDVER$MXSUFFIX"
+	elif [ "$LASTZIP" = "$MXPREFIX$OLDVER$MXSUFFIX.zip" ]
 	then
 		echo "Version Override"
 		echo "Previous version completed successfully!"
@@ -417,7 +418,7 @@ handle_existing() {
 		then
 			warnandfail "FATAL ERROR! Failed to raise version number by one!"
 		fi
-		MX_KERNEL_VERSION="machinexlite-Mark$NEWVER-hltetmo"
+		MX_KERNEL_VERSION="$MXPREFIX$NEWVER$MXSUFFIX"
 		echo -n "$NEWVER" > "$OLDVERFILE"
 	else
 		echo -n "Rebuilding (o)ld version? Or building (n)ew version? Please specify [o|n]: "
@@ -441,7 +442,7 @@ handle_existing() {
 		then
 			echo "Rebulding old version has been selected"
 			echo "Removing old zip files..."
-			MX_KERNEL_VERSION="machinexlite-Mark$OLDVER-hltetmo"
+			MX_KERNEL_VERSION="$MXPREFIX$OLDVER$MXSUFFIX"
 			rm -f "$RDIR/$MX_KERNEL_VERSION.zip"
 		elif [ "$CURVER" = "new" ]
 		then
@@ -451,7 +452,7 @@ handle_existing() {
 			then
 				warnandfail "FATAL ERROR! Failed to raise version number by one!"
 			fi
-			MX_KERNEL_VERSION="machinexlite-Mark$NEWVER-hltetmo"
+			MX_KERNEL_VERSION="$MXPREFIX$NEWVER$MXSUFFIX"
 			echo -n "$NEWVER" > "$OLDVERFILE"
 		fi
 	fi
@@ -464,7 +465,7 @@ handle_existing() {
 rebuild() {
 
 	echo "Using last version. Mark$OLDVER will be removed."
-	MX_KERNEL_VERSION="machinexlite-Mark$OLDVER-hltetmo"
+	MX_KERNEL_VERSION="$MXPREFIX$OLDVER$MXSUFFIX"
     rm "$RDIR/localversion" &> /dev/null
     echo "$MX_KERNEL_VERSION" > "$RDIR/localversion"
 	echo "Removing old zip files..."
