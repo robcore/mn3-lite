@@ -91,7 +91,7 @@ arch_get_unmapped_area(struct file *filp, unsigned long addr,
 	}
 
 	if (len > TASK_SIZE){
-		printk(KERN_ERR "arch_get_unmapped_area (len>TASK_SIZE) len=%lu\
+		pr_debug("arch_get_unmapped_area (len>TASK_SIZE) len=%lu\
 		 	task size=%lu pid=%d do_align=%d addr=%lu \
 			mmap_base=%lu\n",
 			len,TASK_SIZE,current->pid,\
@@ -135,7 +135,7 @@ full_search:
 				mm->cached_hole_size = 0;
 				goto full_search;
 			}
-			printk(KERN_ERR "arch_get_unmapped_area\
+			pr_debug("arch_get_unmapped_area\
 			 	(TASK_SIZE - len < addr)\
 			 	len=%lu task size=%lu pid=%d do_align=%d \
 				addr=%lu mmap_base=%lu\n",
@@ -178,7 +178,7 @@ arch_get_unmapped_area_topdown(struct file *filp, const unsigned long addr0,
 
 	/* requested length too big for entire address space */
 	if (len > TASK_SIZE) {
-		printk(KERN_ERR "arch_get_unmapped_area_topdown\
+		pr_debug("arch_get_unmapped_area_topdown\
 			 (len > TASK_SIZE)len=%lu task size=%lu\
 			 pid=%d do_align=%d addr=%lu  mmap_base=%lu\n"
 			,len,TASK_SIZE,current->pid,do_align,\
