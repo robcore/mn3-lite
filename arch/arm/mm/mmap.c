@@ -91,12 +91,11 @@ arch_get_unmapped_area(struct file *filp, unsigned long addr,
 	}
 
 	if (len > TASK_SIZE){
-		printk(KERN_ERR "%s %d - (len > TASK_SIZE) len=%lx "
-			"TASK_SIZE=%lx pid=%d do_align=%d addr=%lx "
-			"mmap_base=%lx\n",
-			__func__, __LINE__,
-			len, TASK_SIZE, current->pid,
-			do_align, addr, mm->mmap_base);
+		printk(KERN_ERR "arch_get_unmapped_area (len>TASK_SIZE) len=%lu\
+		 	task size=%lu pid=%d do_align=%d addr=%lu \
+			mmap_base=%lu\n",
+			len,TASK_SIZE,current->pid,\
+			do_align,addr,mm->mmap_base);
 		return -ENOMEM;
 	}
 
