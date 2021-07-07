@@ -28,12 +28,12 @@ RDIR="/root/mn3lite"
 MXPREFIX="machinexlite-Mark"
 MXSUFFIX="-hltetmo"
 
+MXRD="$RDIR/mxrd"
 RAMDISKFOLDER="$MXRD/ramdisk"
 ZIPFOLDER="$RDIR/mxzip"
 BUILDIR="$RDIR/build"
 LOGDIR="$RDIR/buildlogs"
 KDIR="$BUILDIR/arch/arm/boot"
-MXRD="$RDIR/mxrd"
 OLDCFG="$RDIR/oldconfigs"
 
 OLDVERFILE="$RDIR/.oldversion"
