@@ -545,9 +545,11 @@ build_kernel() {
     backupconfig
 	start_build_timer
 	echo "Starting build..."
-	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark$(cat $RDIR/.oldversion).log" \
-    || warnandfail "Kernel Build failed!"
-
+	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
+    if [ "$?" -ne "0" ]
+    then
+        warnandfail "Kernel Build failed!"
+    fi
 }
 
 build_kernel_debug() {
@@ -555,8 +557,11 @@ build_kernel_debug() {
     backupconfig
 	start_build_timer
 	echo "Starting build..."
-	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark$(cat $RDIR/.oldversion).log" \
-    || warnandfail "Kernel Build failed!"
+	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
+    if [ "$?" -ne "0" ]
+    then
+        warnandfail "Kernel Build failed!"
+    fi
     stop_build_timer
     timerprint
 }
@@ -637,13 +642,13 @@ build_boot_img() {
         DTB_FILE="$KDIR/$DTS_PREFIX.dtb"
         echo "Creating $DTB_FILE from $DTS_FILE"
         "$BUILDIR/scripts/dtc/dtc" -i "$RDIR/arch/arm/boot/dts/msm8974" -p 1024 -O dtb -o "$DTB_FILE" "$DTS_FILE" 2>&1 | \
-                   tee -a "$LOGDIR/$QUICKDATE.Mark$(cat $RDIR/.oldversion).log" || warnandfail "Failed to build $DTB_FILE!"
+                   tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log" || warnandfail "Failed to build $DTB_FILE!"
     done
 
 	echo "Generating $DTIMG"
 
     ./tools/skales/dtbTool -v -o "$DTIMG" -s 2048 -p "$DTCPATH" "$KDIR" 2>&1 | \
-                   tee -a "$LOGDIR/$QUICKDATE.Mark$(cat $RDIR/.oldversion).log" || warnandfail "dtbTool failed to build $DTIMG!"
+                   tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log" || warnandfail "dtbTool failed to build $DTIMG!"
 
     if [ ! -f "$DTIMG" ]
     then
@@ -853,7 +858,13 @@ package_ramdisk_and_zip() {
 
 build_kernel_and_package() {
 
-	build_kernel && package_ramdisk_and_zip
+	build_kernel
+    if [ -f "$NEWZMG" ]
+    then
+        package_ramdisk_and_zip
+    else
+        warnandfail "build_boot_img called with no zImage!"
+    fi
 
 }
 
