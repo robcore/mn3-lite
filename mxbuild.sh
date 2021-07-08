@@ -29,7 +29,7 @@ MXPREFIX="machinexlite-Mark"
 MXSUFFIX="-hltetmo"
 
 MXRD="$RDIR/mxrd"
-RAMDISKFOLDER="$MXRD/ramdisk"
+RAMDISKFOLDER="$RDIR/mxramdisk"
 ZIPFOLDER="$RDIR/mxzip"
 BUILDIR="$RDIR/build"
 LOGDIR="$RDIR/buildlogs"
@@ -545,8 +545,7 @@ build_kernel() {
     backupconfig
 	start_build_timer
 	echo "Starting build..."
-	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
-    if [ "$?" -ne "0" ]
+	if ! make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
     then
         warnandfail "Kernel Build failed!"
     fi
@@ -557,8 +556,7 @@ build_kernel_debug() {
     backupconfig
 	start_build_timer
 	echo "Starting build..."
-	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
-    if [ "$?" -ne "0" ]
+	if ! make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
     then
         warnandfail "Kernel Build failed!"
     fi
@@ -566,54 +564,56 @@ build_kernel_debug() {
     timerprint
 }
 
-#build_ramdisk() {
-#
-#	echo "Building ramdisk structure..."
-#	cd "$RDIR" || warnandfail "Failed to cd to $RDIR"
-#	rm -rf "$BUILDIR/ramdisk" &>/dev/null
-#	cp -par "$RAMDISKFOLDER" "$BUILDIR/ramdisk" || warnandfail "Failed to create $BUILDIR/ramdisk!"
-#	cd "$BUILDIR/ramdisk" || warnandfail "Failed to cd to $BUILDIR/ramdisk!"
-#	mkdir -pm 755 dev proc sys system
-#	mkdir -pm 771 data
-#	if [ -f "$KDIR/ramdisk.cpio.gz" ]
-#	then
-#		rm "$KDIR/ramdisk.cpio.gz"
-#	fi
-#	echo "Building ramdisk img"
-#	find | fakeroot cpio -v -o -H newc | gzip -v -9 > "$KDIR/ramdisk.cpio.gz"
-#	[ ! -f "$KDIR/ramdisk.cpio.gz" ] && warnandfail "NO ramdisk!"
-#	cd "$RDIR" || warnandfail "Failed to cd to $RDIR"
-#
-#}
+build_ramdisk() {
 
-#build_boot_img_qcdt() {
-#
-#	echo "Generating boot.img..."
-#	rm -f "$ZIPFOLDER/boot.img"
-#	if [ ! -f "$RDIR/scripts/mkqcdtbootimg/mkqcdtbootimg" ]
-#	then
-#		make -C "$RDIR/scripts/mkqcdtbootimg" || warnandfail "Failed to make dtb tool!"
-#	fi
-#
-#	$RDIR/scripts/mkqcdtbootimg/mkqcdtbootimg --kernel "$KDIR/zImage" \
-#		--ramdisk "$KDIR/ramdisk.cpio.gz" \
-#        --dt_dir "$KDIR" \
-#		--cmdline "console=null androidboot.hardware=qcom user_debug=23 msm_rtb.filter=0x37 ehci-hcd.park=3" \
-#		--base "0x00000000" \
-#		--pagesize "2048" \
-#		--ramdisk_offset "0x02000000" \
-#		--tags_offset "0x01e00000" \
-#		--output "$ZIPFOLDER/boot.img"
-#	if [ "$?" -eq 0 ]
-#	then
-#		echo "mkqcdtbootimg appears to have succeeded in building an image"
-#	else
-#		warnandfail "mkqcdtbootimg appears to have failed in building an image!"
-#	fi
-#	[ -f "$ZIPFOLDER/boot.img" ] || warnandfail "$ZIPFOLDER/boot.img does not exist!"
-#	echo -n "SEANDROIDENFORCE" >> "$ZIPFOLDER/boot.img"
-#
-#}
+	echo "Building ramdisk structure..."
+	cd "$RDIR" || warnandfail "Failed to cd to $RDIR"
+	rm -rf "$BUILDIR/ramdisk" &>/dev/null
+	cp -par "$RAMDISKFOLDER" "$BUILDIR/ramdisk" || warnandfail "Failed to create $BUILDIR/ramdisk!"
+	cd "$BUILDIR/ramdisk" || warnandfail "Failed to cd to $BUILDIR/ramdisk!"
+	mkdir -pm 755 dev proc sys system
+	mkdir -pm 771 data
+	[ -f "$KDIR/ramdisk.cpio.gz" ] && rm "$KDIR/ramdisk.cpio.gz"
+	echo "Building ramdisk img"
+	find | fakeroot "$MXRD/bin/linux/x86_64/cpio" -v -o -H newc | gzip -v -9 > "$KDIR/ramdisk.cpio.gz"
+	[ ! -f "$KDIR/ramdisk.cpio.gz" ] && warnandfail "NO ramdisk!"
+	cd "$RDIR" || warnandfail "Failed to cd to $RDIR"
+
+}
+
+build_boot_img_qcdt() {
+
+	echo "Generating boot.img..."
+	rm -f "$ZIPFOLDER/boot.img"
+	if [ ! -f "$RDIR/scripts/mkqcdtbootimg/mkqcdtbootimg" ]
+	then
+		make -C "$RDIR/scripts/mkqcdtbootimg" || warnandfail "Failed to build mkqcdtbootimg!"
+	fi
+
+ 	if [ ! -f "$RDIR/scripts/mkqcdtbootimg/mkqcdtbootimg" ]
+	then
+		warnandfail "mkqcdtbootimg does not exist! Exiting with Error!"
+	fi   
+
+	$RDIR/scripts/mkqcdtbootimg/mkqcdtbootimg --kernel "$KDIR/zImage" \
+		--ramdisk "$KDIR/ramdisk.cpio.gz" \
+        --dt_dir "$KDIR" \
+		--cmdline "console=null androidboot.hardware=qcom user_debug=23 msm_rtb.filter=0x37 ehci-hcd.park=3" \
+		--base "0x00000000" \
+		--pagesize "2048" \
+		--ramdisk_offset "0x02000000" \
+		--tags_offset "0x01e00000" \
+		--output "$ZIPFOLDER/boot.img"
+	if [ "$?" -eq 0 ]
+	then
+		echo "mkqcdtbootimg appears to have succeeded in building an image"
+	else
+		warnandfail "mkqcdtbootimg appears to have failed in building an image!"
+	fi
+	[ -f "$ZIPFOLDER/boot.img" ] || warnandfail "$ZIPFOLDER/boot.img does not exist!"
+	echo -n "SEANDROIDENFORCE" >> "$ZIPFOLDER/boot.img"
+
+}
 
 build_boot_img() {
 
@@ -709,6 +709,8 @@ create_zip() {
 	then
 		warnandfail "$RDIR/$MX_KERNEL_VERSION.zip does not exist!"
 	fi
+
+    cd "$RDIR" || warnandfail "Failed to cd to $RDIR"
 
 	echo "Kernel $MX_KERNEL_VERSION.zip finished"
 	echo "Filepath: "
@@ -852,7 +854,7 @@ EOF
 
 package_ramdisk_and_zip() {
 
-	build_boot_img && create_zip
+	build_ramdisk && build_boot_img_qcdt && create_zip
 
 }
 
