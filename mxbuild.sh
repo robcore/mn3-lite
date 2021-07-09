@@ -19,10 +19,7 @@ warnandfailearly() {
 
 }
 
-if [ ! -d "/root/mx_toolchains" ]
-then
-    warnandfailearly "/root/mx_toolchains folder does not exist!"
-fi
+[ ! -d "/root/mx_toolchains" ] && warnandfailearly "/root/mx_toolchains folder does not exist!"
 
 RDIR="/root/mn3lite"
 MXPREFIX="machinexlite-Mark"
@@ -545,10 +542,8 @@ build_kernel() {
     backupconfig
 	start_build_timer
 	echo "Starting build..."
-	if ! make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
-    then
-        warnandfail "Kernel Build failed!"
-    fi
+	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
+
 }
 
 build_kernel_debug() {
@@ -556,10 +551,7 @@ build_kernel_debug() {
     backupconfig
 	start_build_timer
 	echo "Starting build..."
-	if ! make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
-    then
-        warnandfail "Kernel Build failed!"
-    fi
+	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
     stop_build_timer
     timerprint
 }
@@ -865,7 +857,7 @@ build_kernel_and_package() {
     then
         package_ramdisk_and_zip
     else
-        warnandfail "build_boot_img called with no zImage!"
+        warnandfail "Kernel Build failed!"
     fi
 
 }
@@ -878,7 +870,13 @@ build_all() {
 
 build_debug() {
 
-	clean_build && build_kernel_config && build_kernel_debug
+	clean_build && build_kernel_config
+    if [ -f "$NEWZMG" ]
+    then
+        build_kernel_debug
+    else
+        warnandfail "Kernel Build failed!"
+    fi
 
 }
 
