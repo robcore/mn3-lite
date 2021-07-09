@@ -115,7 +115,7 @@ struct percpu_counter vm_committed_as ____cacheline_aligned_in_smp;
  */
 int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 {
-	long free, allowed;
+	unsigned long free, allowed;
 
 	vm_acct_memory(pages);
 
@@ -1318,6 +1318,10 @@ munmap_back:
 		goto munmap_back;
 	}
 
+	/* Check against address space limit. */
+	if (!may_expand_vm(mm, len >> PAGE_SHIFT))
+		return -ENOMEM;
+
 	/*
 	 * Set 'VM_NORESERVE' if we should not account for the
 	 * memory use of this mapping.
@@ -1422,43 +1426,6 @@ munmap_back:
 	vma_link(mm, vma, prev, rb_link, rb_parent);
 	file = vma->vm_file;
 
-#ifdef CONFIG_TIMA_RKP
-	if(file && (strcmp(current->comm, "zygote") == 0)){
-		char *tmp;
-		char *pathname;
-		struct path path;
-
-		path = file->f_path;
-		path_get(&file->f_path);
-
-		tmp = (char *)__get_free_page(GFP_TEMPORARY);
-
-		if (!tmp) {
-			path_put(&path);
-			return -ENOMEM;
-		}
-
-		pathname = d_path(&path, tmp, PAGE_SIZE);
-		path_put(&path);
-
-		if (IS_ERR(pathname)) {
-			free_page((unsigned long)tmp);
-			return PTR_ERR(pathname);
-		}
-		
-		if (strstr(pathname, "dalvik-heap") != NULL 
-				|| strstr(pathname, "dalvik-bitmap") != NULL
-				|| strstr(pathname, "dalvik-LinearAlloc") != NULL 
-				|| strstr(pathname, "dalvik-mark-stack") != NULL
-				|| strstr(pathname, "dalvik-card-table") != NULL) {
-			//printk("PROC %s\tFILE %s\tSTART %lx\tLEN %lx\n", current->comm, pathname, addr, len);
-			tima_send_cmd2(addr, len, 0x30);
-		}
-
-		/* do something here with pathname */
-		free_page((unsigned long)tmp);
-	}
-#endif
 	/* Once vma denies write, undo our temporary denial count */
 	if (correct_wcount)
 		atomic_inc(&inode->i_writecount);
@@ -1720,7 +1687,7 @@ struct vm_area_struct *find_vma(struct mm_struct *mm, unsigned long addr)
 	if (mm) {
 		/* Check the cache first. */
 		/* (Cache hit rate is typically around 35%.) */
-		vma = ACCESS_ONCE(mm->mmap_cache);
+		vma = mm->mmap_cache;
 		if (!(vma && vma->vm_end > addr && vma->vm_start <= addr)) {
 			struct rb_node * rb_node;
 
