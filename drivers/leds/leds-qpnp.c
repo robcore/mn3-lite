@@ -555,7 +555,7 @@ static struct device *led_dev;
 #ifdef SAMSUNG_LED_PATTERN
 #define RGB_LED_MAX_BRIGHTNESS  255
 #define CURRENT_DIVIDER 12
-static int low_powermode;
+static int low_powermode = 0;
 static int on_patt;
 struct mutex leds_mutex_lock;
 static struct patt_config blue[] = {
@@ -598,9 +598,11 @@ static struct patt_config red[] = {
 static struct patt_config powering_on[] = {
         {
                 .id = QPNP_ID_RGB_GREEN,
-                .duty_pcts = (int [] ){
-                        8, 10, 11, 13, 15, 17, 18, 19, 20, 22, 24, 26, 28, 31, 33, 34, 37, 39,
-                        41, 43, 44, 46, 48, 49, 51,
+                .duty_pcts = (int [] ){ \
+                        8, 10, 11, 13, 15, 17, 18, 19, \
+						20, 22, 24, 26, 28, 31, 33, 34, \
+						37, 39, 41, 43, 44, 46, 48, 49, \
+						51,
                 },
                 .num_duty_pcts = 25,
                 .ramp_step_ms = 31,
@@ -610,9 +612,11 @@ static struct patt_config powering_on[] = {
         },
         {
                 .id = QPNP_ID_RGB_BLUE,
-                .duty_pcts = (int [] ){
-                        79, 80, 80, 81, 82, 83, 84, 85, 85, 86, 87, 88, 89, 90, 91, 92, 92, 93,
-                        94, 95, 96, 97, 98, 99, 100,
+                .duty_pcts = (int [] ){ \
+                    79, 80, 80, 81, 82, 83, 84, 85, \
+					85, 86, 87, 88, 89, 90, 91, 92, \
+					92, 93, 94, 95, 96, 97, 98, 99, \
+					100,
                 },
                 .num_duty_pcts = 25,
                 .ramp_step_ms = 31,
@@ -639,8 +643,7 @@ static struct patt_config battery_full[] = {
 	{
 		.id = QPNP_ID_RGB_GREEN,
 		.duty_pcts = (int []){100, 100},
-		.low_pow_duty_pcts = (int []){100, \
-						100},
+		.low_pow_duty_pcts = (int []){100, 100},
 		.num_duty_pcts = 2,
 		.ramp_step_ms = 0,
 		.pwm_period_us = 1000,
@@ -679,8 +682,7 @@ static struct patt_config charging[] = {
 	{
 		.id = QPNP_ID_RGB_RED,
 		.duty_pcts = (int []){100, 100},
-		.low_pow_duty_pcts = (int []){100,
-						100},
+		.low_pow_duty_pcts = (int []){100, 100},
 		.num_duty_pcts = 2,
 		.ramp_step_ms = 0,
 		.pwm_period_us = 1000,
@@ -1745,6 +1747,7 @@ static int qpnp_rgb_set(struct qpnp_led_data *led)
 {
 	int rc;
 	int duty_us, duty_ns, period_us;
+	struct pwm_config_data *pwm_cfg = led->rgb_cfg->pwm_cfg;
 
 	if (led->cdev.brightness) {
 		if (!led->rgb_cfg->pwm_cfg->blinking)
@@ -1772,6 +1775,20 @@ static int qpnp_rgb_set(struct qpnp_led_data *led)
 					"pwm config failed\n");
 				return rc;
 			}
+		} else if (led->rgb_cfg->pwm_cfg->mode == LPG_MODE) {
+			switch (led->id) {
+				case QPNP_ID_RGB_RED:
+					pwm_cfg->lut_params.start_idx = 0;
+					break;
+				case QPNP_ID_RGB_GREEN:
+					pwm_cfg->lut_params.start_idx = 21;
+					break;
+				case QPNP_ID_RGB_BLUE:
+					pwm_cfg->lut_params.start_idx = 42;
+					break;
+				default:
+					break;
+				}
 		}
 		rc = qpnp_led_masked_write(led,
 			RGB_LED_EN_CTL(led->base),
@@ -3815,7 +3832,7 @@ static void led_pat_on(struct qpnp_led_data *info, struct patt_registry *patt_re
                 }
     }
 
-    for(cnt = 0;cnt < patt_register->len; cnt++){
+    for(cnt = 0; cnt < patt_register->len; cnt++){
         patt_led = &(patt_register->patt[cnt]);
         led_num = patt_led->id - 3;
         samsung_led_set(&info[led_num], brightness);
