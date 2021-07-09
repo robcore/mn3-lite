@@ -1,5 +1,6 @@
+
 /* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
  * only version 2 as published by the Free Software Foundation.
@@ -23,6 +24,7 @@
 #include <linux/qpnp/pwm.h>
 #include <linux/workqueue.h>
 #include <linux/delay.h>
+#include <linux/ctype.h>
 #include <linux/regulator/consumer.h>
 #include <linux/delay.h>
 
@@ -170,10 +172,6 @@
 #define RGB_LED_ATC_CTL(base)		(base + 0x47)
 
 #define RGB_MAX_LEVEL			LED_FULL
-#define RGB_MAX_LEVEL_N2_MENU		120
-#define RGB_MAX_LEVEL_N2_BACK		125
-#define RGB_MAX_LEVEL_N1		110
-#define RGB_MAX_LEVEL_V1		75
 #define RGB_LED_ENABLE_RED		0x80
 #define RGB_LED_ENABLE_GREEN		0x40
 #define RGB_LED_ENABLE_BLUE		0x20
@@ -182,9 +180,14 @@
 #define RGB_LED_SRC_MASK		0x03
 #define QPNP_LED_PWM_FLAGS	(PM_PWM_LUT_LOOP | PM_PWM_LUT_RAMP_UP)
 #define QPNP_LUT_RAMP_STEP_DEFAULT	255
+#define QPNP_LUT_RAMP_STEP_MAX		255
+#define QPNP_LUT_RAMP_STEP_MIN		1
 #define	PWM_LUT_MAX_SIZE		63
 #define	PWM_GPLED_LUT_MAX_SIZE		31
 #define RGB_LED_DISABLE			0x00
+#define RGB_LED_MIN_MS			50
+#define RGB_LED_MAX_MS			10000
+#define RGB_LED_RAMP_STEP_COUNT		5
 
 #define MPP_MAX_LEVEL			LED_FULL
 #define LED_MPP_MODE_CTRL(base)		(base + 0x40)
@@ -192,6 +195,7 @@
 #define LED_MPP_EN_CTRL(base)		(base + 0x46)
 #define LED_MPP_SINK_CTRL(base)		(base + 0x4C)
 
+#define LED_MPP_CURRENT_DEFAULT		5
 #define LED_MPP_CURRENT_MIN		5
 #define LED_MPP_CURRENT_MAX		40
 #define LED_MPP_VIN_CTRL_DEFAULT	0
@@ -230,14 +234,8 @@
 #define NUM_KPDBL_LEDS			4
 #define KPDBL_MASTER_BIT_INDEX		0
 
-#if !defined(CONFIG_SEC_VIENNA_PROJECT) && !defined(CONFIG_SEC_V2_PROJECT) && !defined(CONFIG_SEC_LT03_PROJECT) && !defined(CONFIG_SEC_MONDRIAN_PROJECT) && !defined(CONFIG_SEC_K_PROJECT) && !defined(CONFIG_SEC_N2_PROJECT) && !defined(CONFIG_SEC_PICASSO_PROJECT) && !defined(CONFIG_SEC_KACTIVE_PROJECT)
 #define SAMSUNG_LED_PATTERN 1
-#endif
-
 #define SAMSUNG_TKEY_LED_BRIGHTNESS  90
-#if defined(CONFIG_SEC_AFYON_PROJECT) || defined(CONFIG_SEC_ATLANTIC_PROJECT) || defined( CONFIG_SEC_VASTA_PROJECT) || defined(CONFIG_MACH_MEGA2LTE_KTT)
-#define SAMSUNG_USE_EXTERNAL_CHARGER
-#endif
 
 /**
  * enum qpnp_leds - QPNP supported led ids
@@ -297,22 +295,22 @@ enum led_mode {
 
 #ifdef SAMSUNG_LED_PATTERN
 enum rgb_led_patternRGB {
-       LED_CHARGING_PAT = 1,
-       LED_CHARGING_ERROR_PAT,
+	LED_CHARGING_PAT = 1,
+	LED_CHARGING_ERROR_PAT,
 	LED_MISSED_CALL_PAT,
 	LED_LOW_BATTERY_PAT,
 	LED_FULL_BATTERY_PAT,
 	LED_POWERING_ON_PAT,
 	LED_PATTERN_MAX,
 };
-#endif
 
 enum RGB_LEDS{
         RGB_RED,
         RGB_GREEN,
         RGB_BLUE,
-        RGB_MAX
+        RGB_MAX,
 };
+#endif
 
 static u8 wled_debug_regs[] = {
 	/* common registers */
@@ -454,10 +452,8 @@ struct flash_config_data {
 	bool	flash_on;
 	bool	torch_on;
 	struct regulator *flash_wa_reg;
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
 	struct regulator *flash_boost_reg;
 	struct regulator *torch_boost_reg;
-#endif
 };
 
 /**
@@ -559,10 +555,10 @@ static struct device *led_dev;
 #ifdef SAMSUNG_LED_PATTERN
 #define RGB_LED_MAX_BRIGHTNESS  255
 #define CURRENT_DIVIDER 12
-int low_powermode;
-int on_patt;
-struct mutex    leds_mutex_lock;
-struct patt_config blue[] = {
+static int low_powermode;
+static int on_patt;
+struct mutex leds_mutex_lock;
+static struct patt_config blue[] = {
 	{
 		.id = QPNP_ID_RGB_BLUE,
 		.duty_pcts = (int []){100, 100},
@@ -574,7 +570,7 @@ struct patt_config blue[] = {
 	},
 };
 
-struct patt_config green[] = {
+static struct patt_config green[] = {
 	{
 		.id = QPNP_ID_RGB_GREEN,
 		.duty_pcts = (int []){100, 100},
@@ -586,7 +582,7 @@ struct patt_config green[] = {
 	},
 };
 
-struct patt_config red[] = {
+static struct patt_config red[] = {
 	{
 		.id = QPNP_ID_RGB_RED,
 		.duty_pcts = (int []){100, 100},
@@ -599,11 +595,11 @@ struct patt_config red[] = {
 };
 
 
-struct patt_config powering_on[] = {
+static struct patt_config powering_on[] = {
         {
                 .id = QPNP_ID_RGB_GREEN,
                 .duty_pcts = (int [] ){
-                        8, 10 , 11, 13, 15, 17, 18, 19, 20, 22, 24, 26, 28, 31, 33, 34, 37, 39,
+                        8, 10, 11, 13, 15, 17, 18, 19, 20, 22, 24, 26, 28, 31, 33, 34, 37, 39,
                         41, 43, 44, 46, 48, 49, 51,
                 },
                 .num_duty_pcts = 25,
@@ -626,25 +622,25 @@ struct patt_config powering_on[] = {
         },
 };
 
-struct patt_config charging_error[] = {
+static struct patt_config charging_error[] = {
         {
-                .id = QPNP_ID_RGB_RED,
-                .duty_pcts = (int []){0, 100},
-		  .low_pow_duty_pcts = (int[]){0, 100/LOW_POWERMODE_DIVIDER},
-                .num_duty_pcts = 2,
-                .ramp_step_ms = 0,
-                .pwm_period_us = 1000,
-                .lo_pause = 500,
-                .hi_pause = 500,
+          .id = QPNP_ID_RGB_RED,
+          .duty_pcts = (int []){0, 100},
+		  .low_pow_duty_pcts = (int[]){0, 100},
+          .num_duty_pcts = 2,
+          .ramp_step_ms = 0,
+          .pwm_period_us = 1000,
+          .lo_pause = 500,
+          .hi_pause = 500,
         },
 };
 
-struct patt_config battery_full[] = {
+static struct patt_config battery_full[] = {
 	{
 		.id = QPNP_ID_RGB_GREEN,
 		.duty_pcts = (int []){100, 100},
-		.low_pow_duty_pcts = (int []){100/LOW_POWERMODE_DIVIDER,
-						100/LOW_POWERMODE_DIVIDER},
+		.low_pow_duty_pcts = (int []){100, \
+						100},
 		.num_duty_pcts = 2,
 		.ramp_step_ms = 0,
 		.pwm_period_us = 1000,
@@ -653,11 +649,11 @@ struct patt_config battery_full[] = {
 	},
 };
 
-struct patt_config low_battery[] = {
+static struct patt_config low_battery[] = {
 	{
 		.id = QPNP_ID_RGB_RED,
 		.duty_pcts = (int []){0, 100},
-		.low_pow_duty_pcts = (int []){0, 100/LOW_POWERMODE_DIVIDER},
+		.low_pow_duty_pcts = (int []){0, 100},
 		.num_duty_pcts = 2,
 		.ramp_step_ms = 0,
 		.pwm_period_us = 1000,
@@ -666,11 +662,11 @@ struct patt_config low_battery[] = {
 	},
 };
 
-struct patt_config missed_call_noti[] = {
+static struct patt_config missed_call_noti[] = {
 	{
 		.id = QPNP_ID_RGB_BLUE,
 		.duty_pcts = (int[]){0, 100},
-		.low_pow_duty_pcts = (int []){0, 100/LOW_POWERMODE_DIVIDER},
+		.low_pow_duty_pcts = (int []){0, 100},
 		.num_duty_pcts = 2,
 		.ramp_step_ms = 0,
 		.pwm_period_us = 1000,
@@ -679,12 +675,12 @@ struct patt_config missed_call_noti[] = {
 	},
 };
 
-struct patt_config charging[] = {
+static struct patt_config charging[] = {
 	{
 		.id = QPNP_ID_RGB_RED,
 		.duty_pcts = (int []){100, 100},
-		.low_pow_duty_pcts = (int []){100/LOW_POWERMODE_DIVIDER,
-						100/LOW_POWERMODE_DIVIDER},
+		.low_pow_duty_pcts = (int []){100,
+						100},
 		.num_duty_pcts = 2,
 		.ramp_step_ms = 0,
 		.pwm_period_us = 1000,
@@ -693,7 +689,7 @@ struct patt_config charging[] = {
 	},
 };
 
-struct patt_config blink[] = {
+static struct patt_config blink[] = {
         {
                 .id = QPNP_ID_RGB_RED,
                 .duty_pcts = (int []){0, 100},
@@ -720,7 +716,7 @@ struct patt_config blink[] = {
                 .pwm_period_us = 1000,
                 .lo_pause = 0,
                 .hi_pause = 0,
-        }
+        },
 };
 
 
@@ -773,31 +769,8 @@ static struct patt_registry led_blink_patt[] = {
                 ARRAY_SIZE(blink),
         },
 };
-
-
-
 #endif
-#ifdef SAMSUNG_USE_EXTERNAL_CHARGER
-static int qpnp_led_masked_write_new(struct qpnp_led_data *led, u16 addr, u8 mask, u8 val)
-{
-	int rc;
-	u8 reg;
-	rc = spmi_ext_register_readl(led->spmi_dev->ctrl, 0,
-		addr, &reg, 1);
-	if (rc) {
-		dev_err(&led->spmi_dev->dev,
-			"Unable to read from addr=%x, rc(%d)\n", addr, rc);
-	}
-	reg &= ~mask;
-	reg |= val;
-	rc = spmi_ext_register_writel(led->spmi_dev->ctrl, 0,
-		addr, &reg, 1);
-	if (rc)
-		dev_err(&led->spmi_dev->dev,
-			"Unable to write to addr=%x, rc(%d)\n", addr, rc);
-	return rc;
-}
-#endif
+
 static int qpnp_led_masked_write(struct qpnp_led_data *led, u16 addr, u8 mask, u8 val)
 {
 	int rc;
@@ -837,33 +810,7 @@ static void qpnp_dump_regs(struct qpnp_led_data *led, u8 regs[], u8 array_size)
 	}
 	pr_debug("===== %s LED register dump end =====\n", led->cdev.name);
 }
-#ifdef SAMSUNG_USE_EXTERNAL_CHARGER
-#define USB_SUSPEND_BIT	BIT(0)
-static void qpnp_flash_reg_en(struct qpnp_led_data *led, bool enable)
-{
-    if(enable)
-    {
-	qpnp_led_masked_write_new(led,  0x1347, USB_SUSPEND_BIT, USB_SUSPEND_BIT);
-	qpnp_led_masked_write_new(led,  0x13D0, 0xFF, 0xA5);
-	qpnp_led_masked_write_new(led,  0x13EA, 0xFF, 0x2F);
-	qpnp_led_masked_write_new(led,  0x1546, 0x80, 0x80);
-    }
-    else
-    {
-	qpnp_led_masked_write_new(led,  0x1546, 0x80, 0x00);
-	qpnp_led_masked_write_new(led,  0x10D0, 0xFF, 0xA5);
-	qpnp_led_masked_write_new(led,  0x10EA, 0xFF, 0x20);
-	usleep(2000);
-	qpnp_led_masked_write_new(led,  0x10D0, 0xFF, 0xA5);
-	qpnp_led_masked_write_new(led,  0x10EA, 0xFF, 0x00);
-	qpnp_led_masked_write_new(led,  0x13D0, 0xFF, 0xA5);
-	qpnp_led_masked_write_new(led,  0x13EA, 0xFF, 0x00);
-	usleep(1000);
-	qpnp_led_masked_write_new(led,  0x1347, USB_SUSPEND_BIT, 0x0);
-    }
 
-}
-#endif
 static int qpnp_wled_sync(struct qpnp_led_data *led)
 {
 	int rc;
@@ -1230,25 +1177,16 @@ static int qpnp_flash_regulator_operate(struct qpnp_led_data *led, bool on)
 			break;
 			}
 	    for (i = 0; i < led->num_leds; i++) {
-#ifdef SAMSUNG_USE_EXTERNAL_CHARGER
-		qpnp_flash_reg_en(led, true);
-#else
-		if (led_array[i].flash_cfg->flash_reg_get) {
-		    rc = regulator_enable(
-			    led_array[i].flash_cfg->\
-			    flash_boost_reg);
-		    if (rc) {
-			dev_err(&led->spmi_dev->dev,
-				"Regulator enable failed(%d)\n",
-				rc);
-			return rc;
-		    }
-#endif
-		    led->flash_cfg->flash_on = true;
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
-		}
-#endif
-		break;
+			if (led_array[i].flash_cfg->flash_reg_get) {
+			    rc = regulator_enable(led_array[i].flash_cfg-> \
+			    					  flash_boost_reg);
+		    	if (rc) {
+					dev_err(&led->spmi_dev->dev, \
+						"Regulator enable failed(%d)\n", rc);
+					return rc;
+		    	}
+		    	led->flash_cfg->flash_on = true;
+			}
 	    }
 	}
 
@@ -1257,9 +1195,7 @@ static int qpnp_flash_regulator_operate(struct qpnp_led_data *led, bool on)
 regulator_turn_off:
 	if (regulator_on && led->flash_cfg->flash_on) {
 	    for (i = 0; i < led->num_leds; i++) {
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
 		if (led_array[i].flash_cfg->flash_reg_get) {
-#endif
 		    rc = qpnp_led_masked_write(led,
 			    FLASH_ENABLE_CONTROL(led->base),
 			    FLASH_ENABLE_MASK,
@@ -1269,7 +1205,6 @@ regulator_turn_off:
 				"Enable reg write failed(%d)\n",
 				rc);
 		    }
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
 				rc = regulator_disable(led_array[i].flash_cfg->\
 							flash_boost_reg);
 				if (rc) {
@@ -1291,24 +1226,14 @@ regulator_turn_off:
 					}
 				}
 
-		    
-#endif
-#ifdef SAMSUNG_USE_EXTERNAL_CHARGER
-		    qpnp_flash_reg_en(led,false);
-#endif
 		    led->flash_cfg->flash_on = false;
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
 		}
-#endif
 		break;
 		}
 	}
 
 	return 0;
 }
-
-
-
 
 static int qpnp_torch_regulator_operate(struct qpnp_led_data *led, bool on)
 {
@@ -1318,17 +1243,12 @@ static int qpnp_torch_regulator_operate(struct qpnp_led_data *led, bool on)
 	goto regulator_turn_off;
 
     if (!led->flash_cfg->torch_on) {
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
 	rc = regulator_enable(led->flash_cfg->torch_boost_reg);
 	if (rc) {
 	    dev_err(&led->spmi_dev->dev,
 		    "Regulator enable failed(%d)\n", rc);
 	    return rc;
 	}
-#endif
-#ifdef SAMSUNG_USE_EXTERNAL_CHARGER
-	qpnp_flash_reg_en(led,true);
-#endif
 	led->flash_cfg->torch_on = true;
     }
     return 0;
@@ -1341,17 +1261,13 @@ regulator_turn_off:
 	    dev_err(&led->spmi_dev->dev,
 		    "Enable reg write failed(%d)\n", rc);
 	}
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
+
 	rc = regulator_disable(led->flash_cfg->torch_boost_reg);
 	if (rc) {
 	    dev_err(&led->spmi_dev->dev,
 		    "Regulator disable failed(%d)\n", rc);
 	    return rc;
 	}
-#endif
-#ifdef SAMSUNG_USE_EXTERNAL_CHARGER
-	qpnp_flash_reg_en(led,false);
-#endif
 	led->flash_cfg->torch_on = false;
     }
     return 0;
@@ -1618,12 +1534,8 @@ static int qpnp_flash_set(struct qpnp_led_data *led)
 
 			rc = qpnp_led_masked_write(led,
 				FLASH_ENABLE_CONTROL(led->base),
-#if defined(CONFIG_MACH_VICTORLTE_CTC) || defined(CONFIG_SEC_MEGA2_PROJECT)
-				led->flash_cfg->enable_module,
-#else
 				led->flash_cfg->enable_module &
 				~FLASH_ENABLE_MODULE_MASK,
-#endif
 				FLASH_DISABLE_ALL);
 			if (rc) {
 				dev_err(&led->spmi_dev->dev,
@@ -1999,19 +1911,8 @@ void tkey_led_enables(int level)
 		return;
 	}
 	if (level == 1) {
-#if defined(CONFIG_SEC_LT03_PROJECT)
-		brightness_menu = RGB_MAX_LEVEL_N1;
-		brightness_back = RGB_MAX_LEVEL_N1;
-#elif defined(CONFIG_SEC_PICASSO_PROJECT)
-		brightness_menu = RGB_MAX_LEVEL_N2_MENU;
-		brightness_back = RGB_MAX_LEVEL_N2_BACK;
-#elif defined(CONFIG_SEC_VIENNA_PROJECT)
-		brightness_menu = RGB_MAX_LEVEL_V1;
-		brightness_back = RGB_MAX_LEVEL_V1;
-#else
 		brightness_menu = RGB_MAX_LEVEL;
 		brightness_back = RGB_MAX_LEVEL;
-#endif
 	}
 	else if (level == 0) {
 		brightness_menu = LED_OFF;
@@ -3354,7 +3255,7 @@ static int __devinit qpnp_get_config_flash(struct qpnp_led_data *led,
 		led->flash_cfg->enable_module = FLASH_ENABLE_LED_0;
 		led->flash_cfg->current_addr = FLASH_LED_0_CURR(led->base);
 		led->flash_cfg->trigger_flash = FLASH_LED_0_OUTPUT;
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
+
 		if (!*reg_set) {
 		    led->flash_cfg->flash_boost_reg =
 			regulator_get(&led->spmi_dev->dev,
@@ -3369,7 +3270,7 @@ static int __devinit qpnp_get_config_flash(struct qpnp_led_data *led,
 		    *reg_set = true;
 		} else
 		    led->flash_cfg->flash_reg_get = false;
-#endif
+
 		if (led->flash_cfg->torch_enable) {
 		    led->flash_cfg->second_addr =
 			FLASH_LED_1_CURR(led->base);
@@ -3378,7 +3279,7 @@ static int __devinit qpnp_get_config_flash(struct qpnp_led_data *led,
 	    led->flash_cfg->enable_module = FLASH_ENABLE_LED_1;
 	    led->flash_cfg->current_addr = FLASH_LED_1_CURR(led->base);
 	    led->flash_cfg->trigger_flash = FLASH_LED_1_OUTPUT;
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
+
 	    if (!*reg_set) {
 		led->flash_cfg->flash_boost_reg =
 		    regulator_get(&led->spmi_dev->dev,
@@ -3393,7 +3294,7 @@ static int __devinit qpnp_get_config_flash(struct qpnp_led_data *led,
 		*reg_set = true;
 	    } else
 		led->flash_cfg->flash_reg_get = false;
-#endif
+
 	    if (led->flash_cfg->torch_enable) {
 		led->flash_cfg->second_addr =
 		    FLASH_LED_0_CURR(led->base);
@@ -3404,7 +3305,7 @@ static int __devinit qpnp_get_config_flash(struct qpnp_led_data *led,
 	}
 
 	if (led->flash_cfg->torch_enable) {
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
+
 		if (of_find_property(of_get_parent(node), "torch-boost-supply",
 									NULL)) {
 			led->flash_cfg->torch_boost_reg =
@@ -3416,11 +3317,11 @@ static int __devinit qpnp_get_config_flash(struct qpnp_led_data *led,
 					"Torch regulator get failed(%d)\n", rc);
 				goto error_get_torch_reg;
 			}
-#endif
+
 			led->flash_cfg->enable_module = FLASH_ENABLE_MODULE;
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
+
 		} else
-#endif
+
 			led->flash_cfg->enable_module = FLASH_ENABLE_ALL;
 		led->flash_cfg->trigger_flash = FLASH_TORCH_OUTPUT;
 	}
@@ -3480,13 +3381,13 @@ static int __devinit qpnp_get_config_flash(struct qpnp_led_data *led,
 	return 0;
 
 error_get_torch_reg:
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
+
 	regulator_put(led->flash_cfg->torch_boost_reg);
-#endif
+
 error_get_flash_reg:
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
+
 	regulator_put(led->flash_cfg->flash_boost_reg);
-#endif
+
 	return rc;
 
 }
@@ -3936,7 +3837,7 @@ static ssize_t store_patt(struct device *dev, struct device_attribute *devattr,
         }
         cnt= buf[0]-'0';
         for(i = 0; i < RGB_MAX; i++)
-             samsung_led_set(&info[i],LED_OFF);
+             samsung_led_set(&info[i], LED_OFF);
 	if(cnt == LED_POWERING_ON_PAT){
             info[RGB_GREEN].rgb_cfg->enable = RGB_LED_ENABLE_GREEN | RGB_LED_ENABLE_BLUE;
             info[RGB_BLUE].rgb_cfg->enable =    RGB_LED_ENABLE_GREEN | RGB_LED_ENABLE_BLUE;
@@ -4537,14 +4438,13 @@ static int __devexit qpnp_leds_remove(struct spmi_device *spmi)
 			break;
 		case QPNP_ID_FLASH1_LED0:
 		case QPNP_ID_FLASH1_LED1:
-#ifndef SAMSUNG_USE_EXTERNAL_CHARGER
+
 			if (led_array[i].flash_cfg->flash_reg_get)
 				regulator_put(led_array[i].flash_cfg-> \
 							flash_boost_reg);
 			if (led_array[i].flash_cfg->torch_enable)
 				regulator_put(led_array[i].flash_cfg->\
 							torch_boost_reg);
-#endif
 			sysfs_remove_group(&led_array[i].cdev.dev->kobj,
 							&led_attr_group);
 			break;
