@@ -175,9 +175,9 @@ int sysctl_lowmem_reserve_ratio[MAX_NR_ZONES-1] = {
 	 256,
 #endif
 #ifdef CONFIG_HIGHMEM
-	 96,
+	 32,
 #endif
-	 96,
+	 32,
 };
 
 EXPORT_SYMBOL(totalram_pages);
@@ -935,7 +935,7 @@ struct page *__rmqueue_smallest(struct zone *zone, unsigned int order,
  * This array describes the order lists are fallen back to when
  * the free lists for the desirable migrate type are depleted
  */
-static int fallbacks[MIGRATE_TYPES][4] = {
+static int fallbacks[MIGRATE_TYPES][MIGRATE_TYPES-1] = {
 	[MIGRATE_UNMOVABLE]   = { MIGRATE_RECLAIMABLE, MIGRATE_MOVABLE,     MIGRATE_RESERVE },
 	[MIGRATE_RECLAIMABLE] = { MIGRATE_UNMOVABLE,   MIGRATE_MOVABLE,     MIGRATE_RESERVE },
 #ifdef CONFIG_CMA
@@ -958,7 +958,7 @@ int *get_migratetype_fallbacks(int mtype)
  * Note that start_page and end_pages are not aligned on a pageblock
  * boundary. If alignment is required, use move_freepages_block()
  */
-int move_freepages(struct zone *zone,
+static int move_freepages(struct zone *zone,
 			  struct page *start_page, struct page *end_page,
 			  int migratetype)
 {
@@ -5902,7 +5902,7 @@ int set_migratetype_isolate(struct page *page)
 
 out:
 	if (!ret) {
-		unsigned long nr_pages;
+		int nr_pages;
 		int migratetype = get_pageblock_migratetype(page);
 
 		set_pageblock_migratetype(page, MIGRATE_ISOLATE);
@@ -5920,7 +5920,8 @@ out:
 void unset_migratetype_isolate(struct page *page, unsigned migratetype)
 {
 	struct zone *zone;
-	unsigned long flags, nr_pages;
+	unsigned long flags;
+	int nr_pages;
 
 	zone = page_zone(page);
 	spin_lock_irqsave(&zone->lock, flags);

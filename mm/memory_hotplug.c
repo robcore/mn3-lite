@@ -142,7 +142,7 @@ static void register_page_bootmem_info_section(unsigned long start_pfn)
 	mapsize = sizeof(struct page) * PAGES_PER_SECTION;
 	mapsize = PAGE_ALIGN(mapsize) >> PAGE_SHIFT;
 
-	page_mapsize = PAGE_SIZE/sizeof(struct page);
+	page_mapsize = (PAGE_SIZE / sizeof(struct page));
 
 	/* remember memmap's page, except those that reference only holes */
 	for (i = 0; i < mapsize; i++, page++) {
@@ -1038,10 +1038,7 @@ repeat:
 	/* reset pagetype flags and makes migrate type to be MOVABLE */
 	undo_isolate_page_range(start_pfn, end_pfn, MIGRATE_MOVABLE);
 	/* removal success */
-	if (offlined_pages > zone->present_pages)
-		zone->present_pages = 0;
-	else
-		zone->present_pages -= offlined_pages;
+	zone->present_pages -= offlined_pages;
 	zone->zone_pgdat->node_present_pages -= offlined_pages;
 	totalram_pages -= offlined_pages;
 
@@ -1083,7 +1080,6 @@ int remove_memory(u64 start, u64 size)
 	end_pfn = start_pfn + PFN_DOWN(size);
 	return offline_pages(start_pfn, end_pfn, 120 * HZ);
 }
-
 #else
 int remove_memory(u64 start, u64 size)
 {

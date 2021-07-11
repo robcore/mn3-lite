@@ -154,11 +154,6 @@ static void add_mm_counter_fast(struct mm_struct *mm, int member, int val)
 
 /* sync counter once per 64 page faults */
 #define TASK_RSS_EVENTS_THRESH	(64)
-
-#if defined(CONFIG_VMWARE_MVP)
-EXPORT_SYMBOL_GPL(get_mm_counter);
-#endif
-
 static void check_sync_rss_stat(struct task_struct *task)
 {
 	if (unlikely(task != current))
@@ -716,9 +711,6 @@ static void print_bad_pte(struct vm_area_struct *vma, unsigned long addr,
 	if (vma->vm_file && vma->vm_file->f_op)
 		print_symbol(KERN_ALERT "vma->vm_file->f_op->mmap: %s\n",
 				(unsigned long)vma->vm_file->f_op->mmap);
-
-	BUG_ON(PANIC_CORRUPTION);
-
 	dump_stack();
 	add_taint(TAINT_BAD_PAGE);
 }
@@ -1407,6 +1399,7 @@ void zap_page_range(struct vm_area_struct *vma, unsigned long address,
 	unmap_vmas(&tlb, vma, address, end, &nr_accounted, details);
 	tlb_finish_mmu(&tlb, address, end);
 }
+EXPORT_SYMBOL_GPL(zap_page_range);
 
 /**
  * zap_page_range_single - remove user pages in a given range
@@ -1433,7 +1426,6 @@ static void zap_page_range_single(struct vm_area_struct *vma, unsigned long addr
 	mmu_notifier_invalidate_range_end(mm, address, end);
 	tlb_finish_mmu(&tlb, address, end);
 }
-EXPORT_SYMBOL_GPL(zap_page_range);
 
 /**
  * zap_vma_ptes - remove ptes mapping the vma
@@ -3057,7 +3049,6 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	}
 
 	locked = lock_page_or_retry(page, mm, flags);
-
 	delayacct_clear_flag(DELAYACCT_PF_SWAPIN);
 	if (!locked) {
 		ret |= VM_FAULT_RETRY;
@@ -3208,7 +3199,6 @@ static inline int check_stack_guard_page(struct vm_area_struct *vma, unsigned lo
 	}
 	return 0;
 }
-EXPORT_SYMBOL_GPL(vmtruncate_range);
 
 /*
  * We enter with non-exclusive mmap_sem (to exclude vma changes,
