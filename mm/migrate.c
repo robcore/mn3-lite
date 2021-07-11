@@ -995,15 +995,14 @@ int migrate_pages(struct list_head *from,
 		enum migrate_mode mode)
 {
 	int retry = 1;
-	int nr_failed = 0;
-	int nr_succeeded = 0;
+	unsigned int nr_failed = 0;
+	unsigned int nr_succeeded = 0;
 	int pass = 0;
 	struct page *page;
 	struct page *page2;
 	int swapwrite = current->flags & PF_SWAPWRITE;
 	int rc;
 
-	trace_migrate_pages_start(mode);
 	if (!swapwrite)
 		current->flags |= PF_SWAPWRITE;
 
@@ -1022,7 +1021,6 @@ int migrate_pages(struct list_head *from,
 				goto out;
 			case -EAGAIN:
 				retry++;
-				trace_migrate_retry(retry);
 				break;
 			case 0:
 				nr_succeeded++;
@@ -1043,7 +1041,6 @@ out:
 	if (!swapwrite)
 		current->flags &= ~PF_SWAPWRITE;
 
-	trace_migrate_pages_end(mode);
 	if (rc)
 		return rc;
 
