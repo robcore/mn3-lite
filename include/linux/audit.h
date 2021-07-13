@@ -704,6 +704,10 @@ extern int  audit_receive_filter(int type, int pid, int uid, int seq,
 				u32 sessionid, u32 sid);
 extern int audit_enabled;
 #else
+static inline int audit_update_lsm_rules(void)
+{
+	return 0;
+}
 #define audit_log(c,g,t,f,...) do { ; } while (0)
 #define audit_log_start(c,g,t) ({ NULL; })
 #define audit_log_vformat(b,f,a) do { ; } while (0)
