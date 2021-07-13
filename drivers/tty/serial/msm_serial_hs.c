@@ -70,7 +70,9 @@
 #define UART_SPS_CONS_PERIPHERAL 0
 #define UART_SPS_PROD_PERIPHERAL 1
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 static void *ipc_msm_hs_log_ctxt;
+#endif
 #define IPC_MSM_HS_LOG_PAGES 30
 
 
@@ -176,7 +178,7 @@ enum {
 static int hs_serial_debug_mask = DBG_LEV;
 module_param_named(debug_mask, hs_serial_debug_mask,
 		   int, S_IRUGO | S_IWUSR | S_IWGRP);
-
+#ifdef CONFIG_MSM_IPC_LOGGING
 #define MSM_HS_DBG(x...) do { \
 	if (hs_serial_debug_mask >= DBG_LEV) { \
 		if (ipc_msm_hs_log_ctxt) \
@@ -209,6 +211,31 @@ module_param_named(debug_mask, hs_serial_debug_mask,
 		hs_serial_debug_mask = FATAL_LEV; \
 	} \
 } while (0)
+#else
+#define MSM_HS_DBG(x...) do { \
+	pr_debug(x); \
+	} \
+} while (0)
+
+#define MSM_HS_INFO(x...) do { \
+	pr_debug(x); \
+	} \
+} while (0)
+
+/* warnings and errors show up on console always */
+#define MSM_HS_WARN(x...) do { \
+	pr_debug(x); \
+} while (0)
+
+/* ERROR condition in the driver sets the hs_serial_debug_mask
+ * to ERR_FATAL level, so that this message can be seen
+ * in IPC logging. Further errors continue to log on the console
+ */
+#define MSM_HS_ERR(x...) do { \
+	pr_debug(x); \
+	} \
+} while (0)
+#endif
 /*
  * There are 3 different kind of UART Core available on MSM.
  * High Speed UART (i.e. Legacy HSUART), GSBI based HSUART
@@ -614,6 +641,7 @@ static int sps_rx_disconnect(struct sps_pipe *sps_pipe_handler)
 	return sps_disconnect(sps_pipe_handler);
 }
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 static void hex_dump_ipc(char *prefix, char *string, int size)
 {
 	unsigned char linebuf[512];
@@ -631,6 +659,7 @@ static void hex_dump_ipc(char *prefix, char *string, int size)
 			MSM_HS_INFO("%s : %s", prefix, linebuf);
 	}
 }
+#endif
 
 /*
  * This API read and provides UART Core registers information.
@@ -1379,7 +1408,9 @@ static void msm_hs_submit_tx_locked(struct uart_port *uport)
 	if (tx_count > left)
 		tx_count = left;
 	MSM_HS_DBG("%s(): [UART_TX]<%d>\n", __func__, tx_count);
+#ifdef CONFIG_MSM_IPC_LOGGING
 	hex_dump_ipc("HSUART write: ", &tx_buf->buf[tx_buf->tail], tx_count);
+#endif
 	src_addr = tx->dma_base + tx_buf->tail;
 
 	if (pdev->id == 0 && tx_count == 4 && buff[0] == 0x1 && buff[1] == 0x3 && buff[2] == 0xc && buff[3] == 0x0) {
@@ -1616,7 +1647,9 @@ static void msm_serial_hs_rx_tlet(unsigned long tlet_ptr)
 	rx_count = msm_uport->rx_count_callback;
 
 	MSM_HS_DBG("%s():[UART_RX]<%d>\n", __func__, rx_count);
+#ifdef CONFIG_MSM_IPC_LOGGING
 	hex_dump_ipc("HSUART Read: ", msm_uport->rx.buffer, rx_count);
+#endif
 	if (0 != (uport->read_status_mask & CREAD)) {
 		retval = tty_insert_flip_string(tty, msm_uport->rx.buffer,
 						rx_count);
@@ -3274,10 +3307,12 @@ static int __init msm_serial_hs_init(void)
 {
 	int ret;
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 	ipc_msm_hs_log_ctxt = ipc_log_context_create(IPC_MSM_HS_LOG_PAGES,
 							"msm_serial_hs", 0);
 	if (!ipc_msm_hs_log_ctxt)
 		pr_debug("%s: error creating logging context", __func__);
+#endif
 
 	ret = uart_register_driver(&msm_hs_driver);
 	if (unlikely(ret)) {
