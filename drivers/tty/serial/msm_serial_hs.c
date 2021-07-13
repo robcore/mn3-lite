@@ -214,12 +214,10 @@ module_param_named(debug_mask, hs_serial_debug_mask,
 #else
 #define MSM_HS_DBG(x...) do { \
 	pr_debug(x); \
-	} \
 } while (0)
 
 #define MSM_HS_INFO(x...) do { \
 	pr_debug(x); \
-	} \
 } while (0)
 
 /* warnings and errors show up on console always */
@@ -233,7 +231,6 @@ module_param_named(debug_mask, hs_serial_debug_mask,
  */
 #define MSM_HS_ERR(x...) do { \
 	pr_debug(x); \
-	} \
 } while (0)
 #endif
 /*
