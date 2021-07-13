@@ -63,14 +63,13 @@ QUICKDATE="$QUICKYMD-$QUICKTIME"
 #CORECOUNT="$(grep processor /proc/cpuinfo | wc -l)"
 #TOOLCHAIN="/root/mx_toolchains/arm-cortex_a15-linux-gnueabihf_5.3/bin/arm-cortex_a15-linux-gnueabihf-"
 #TOOLCHAIN="/root/mx_toolchains/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-"
-#TOOLCHAIN="/root/mx_toolchains/arm-cortex_a15-linux-gnueabihf-linaro_4.9.4-2015.06/bin/arm-cortex_a15-linux-gnueabihf-"
 #TOOLCHAIN="/root/mx_toolchains/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabi/bin/arm-linux-gnueabi-"
 #TOOLCHAIN="/root/mx_toolchains/gcc-linaro-6.5.0-2018.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-"
 #TOOLCHAIN="/root/mx_toolchains/gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf-"
 #TOOLCHAIN="/root/mx_toolchains/gcc-arm-8.2-2019.01-x86_64-arm-linux-gnueabihf/bin/arm-linux-gnueabihf-"
 TOOLCHAIN="/root/mx_toolchains/arm-cortex_a15-linux-gnueabihf-linaro_4.9.4-2015.06/bin/arm-cortex_a15-linux-gnueabihf-"
 export ARCH="arm"
-export SUBARCH="arm"
+#export SUBARCH="arm"
 export CROSS_COMPILE="$TOOLCHAIN"
 
 if [ "$1" != "-b" ] && [ "$1" != "--bsd" ] && [ "$1" != "-c" ] && [ "$1" != "--clean" ]
@@ -213,34 +212,34 @@ clean_build() {
 	getmxrecent
 	if [ "$1" = "standalone" ]
 	then
-		echo -ne "Cleaning build         \r"; \
-		make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 clean
-		echo -ne "Cleaning build.        \r"; \
-		make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 distclean
-		echo -ne "Cleaning build..       \r"; \
-		make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 mrproper
+		echo -ne "Cleaning build.         \r"; \
+		make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 clean
+		echo -ne "Cleaning build..        \r"; \
+		make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 distclean
+		echo -ne "Cleaning build...       \r"; \
+		make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 mrproper
 	else
-		echo -ne "Cleaning build         \r"; \
-		make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 clean &>/dev/null
-		echo -ne "Cleaning build.        \r"; \
-		make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 distclean &>/dev/null
-		echo -ne "Cleaning build..       \r"; \
-		make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 mrproper &>/dev/null
+		echo -ne "Cleaning build.         \r"; \
+		make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 clean &>/dev/null
+		echo -ne "Cleaning build..        \r"; \
+		make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 distclean &>/dev/null
+		echo -ne "Cleaning build...       \r"; \
+		make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -j16 mrproper &>/dev/null
 	fi
-	echo -ne "Cleaning build...      \r"; \
+	echo -ne "Cleaning build....      \r"; \
 	takeouttrash &>/dev/null
-	echo -ne "Cleaning build....     \r"; \
+	echo -ne "Cleaning build.....     \r"; \
 	rm -rf "$BUILDIR" &>/dev/null
-	echo -ne "Cleaning build.....    \r"; \
+	echo -ne "Cleaning build......    \r"; \
 	rm "$ZIPFOLDER/boot.img" &>/dev/null
-	echo -ne "Cleaning build......   \r"; \
+	echo -ne "Cleaning build.......   \r"; \
     [ -f "$MXRD/image-new.img" ] && rm "$MXRD/image-new.img"
     [ -f "$NEWRD" ] && rm "$NEWRD"
-	echo -ne "Cleaning build.......  \r"; \
+	echo -ne "Cleaning build........  \r"; \
 #	rm -rf "$RDIR/scripts/mkqcdtbootimg/mkqcdtbootimg" &>/dev/null
-	echo -ne "Cleaning build........ \r"; \
-	echo -ne "                       \r"; \
-	echo -ne "Cleaned                \r"; \
+	echo -ne "Cleaning build......... \r"; \
+	echo -ne "                        \r"; \
+	echo -ne "Cleaned.                \r"; \
 	echo -e "\n"
 
 }
@@ -485,7 +484,7 @@ build_new_config() {
 	mkdir -p "$BUILDIR" || warnandfail "Failed to make $BUILDIR directory!"
 	cat "$RDIR/arch/arm/configs/msm8974_sec_hlte_tmo_defconfig" "$RDIR/arch/arm/configs/msm8974_sec_defconfig" "$RDIR/arch/arm/configs/selinux_defconfig" > "$RDIR/arch/arm/configs/mxconfig"
 	cp "$MXCONFIG" "$BUILDIR/.config" || warnandfail "Config Copy Error!"
-	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -C "$RDIR" O="$BUILDIR" menuconfig
+	make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -C "$RDIR" O="$BUILDIR" menuconfig
 
 }
 
@@ -495,7 +494,7 @@ build_menuconfig() {
 	cd "$RDIR" || warnandfail "Failed to cd to $RDIR!"
 	mkdir -p "$BUILDIR" || warnandfail "Failed to make $BUILDIR directory!"
 	cp "$MXCONFIG" "$BUILDIR/.config" || warnandfail "Config Copy Error!"
-	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -C "$RDIR" O="$BUILDIR" menuconfig
+	make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -C "$RDIR" O="$BUILDIR" menuconfig
 
 }
 
@@ -505,7 +504,7 @@ build_single_config() {
 	cd "$RDIR" || warnandfail "Failed to cd to $RDIR!"
 	mkdir -p "$BUILDIR" || warnandfail "Failed to make $BUILDIR directory!"
 	cp "$MXCONFIG" "$BUILDIR/.config" || warnandfail "Config Copy Error!"
-	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -C "$RDIR" O="$BUILDIR" oldconfig || warnandfail "make oldconfig Failed!"
+	make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -C "$RDIR" O="$BUILDIR" oldconfig || warnandfail "make oldconfig Failed!"
 
 }
 
@@ -515,7 +514,7 @@ build_kernel_config() {
 	cd "$RDIR" || warnandfail "Failed to cd to $RDIR!"
 	mkdir -p "$BUILDIR" || warnandfail "Failed to make $BUILDIR directory!"
 	cp "$MXCONFIG" "$BUILDIR/.config" || warnandfail "Config Copy Error!"
-	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -C "$RDIR" O="$BUILDIR" oldconfig || warnandfail "make oldconfig Failed!"
+	make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -C "$RDIR" O="$BUILDIR" oldconfig || warnandfail "make oldconfig Failed!"
 	getmxrecent
 
 }
@@ -533,7 +532,7 @@ backupconfig() {
 build_single_driver() {
 
 	echo "Building Single Driver..."
-	make -Wa ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -C "$RDIR" -S -s -j16 O="$BUILDIR" "$1"
+	make -Wa ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -C "$RDIR" -S -s -j16 O="$BUILDIR" "$1"
 
 }
 
@@ -542,7 +541,7 @@ build_kernel() {
     backupconfig
 	start_build_timer
 	echo "Starting build..."
-	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
+	make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
 
 }
 
@@ -551,7 +550,7 @@ build_kernel_debug() {
     backupconfig
 	start_build_timer
 	echo "Starting build..."
-	make ARCH="arm" SUBARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
+	make ARCH="arm" CROSS_COMPILE="$TOOLCHAIN" -S -s -j16 -C "$RDIR" O="$BUILDIR" 2>&1 | tee -a "$LOGDIR/$QUICKDATE.Mark${OLDVER}.log"
     stop_build_timer
     timerprint
 }
