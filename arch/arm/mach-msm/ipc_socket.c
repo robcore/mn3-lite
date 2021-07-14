@@ -47,22 +47,22 @@ do { \
 	if (ipc_req_resp_log_txt) { \
 		ipc_log_string(ipc_req_resp_log_txt, buf); \
 	} \
-} while (0) \
+} while (0)
 
 #define IPC_IND_LOG(level, buf...) \
 do { \
 	if (ipc_ind_log_txt) { \
 		ipc_log_string(ipc_ind_log_txt, buf); \
 	} \
-} while (0) \
+} while (0)
 #else
 #define IPC_REQ_RESP_LOG(level, buf...) \
 do { \
-} while (0) \
+} while (0)
 
 #define IPC_IND_LOG(level, buf...) \
 do { \
-} while (0) \
+} while (0)
 #endif
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
