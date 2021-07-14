@@ -33,8 +33,9 @@
 #include <mach/msm_smd.h>
 #include <mach/subsystem_restart.h>
 #include <mach/socinfo.h>
+#ifdef CONFIG_MSM_IPC_LOGGING
 #include <mach/msm_ipc_logging.h>
-
+#endif
 #include "smd_private.h"
 
 #define MODULE_NAME "msm_smdtty"
@@ -46,6 +47,7 @@
 #define SMD_TTY_PROBE_WAIT_TIMEOUT 3000
 #define SMD_TTY_LOG_PAGES 2
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 #define SMD_TTY_INFO(buf...) \
 do { \
 	if (smd_tty_log_ctx) { \
@@ -61,7 +63,15 @@ do { \
 } while (0)
 
 static void *smd_tty_log_ctx;
+#else
+#define SMD_TTY_INFO(buf...) \
+do { \
+} while (0)
 
+#define SMD_TTY_ERR(buf...) \
+do { \
+} while (0)
+#endif
 static struct delayed_work smd_tty_probe_work;
 static int smd_tty_probe_done;
 
@@ -731,6 +741,7 @@ static struct notifier_block smd_tty_pm_nb = {
 	.priority = 0,
 };
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 /**
  * smd_tty_log_init()- Init function for IPC logging
  *
@@ -744,6 +755,7 @@ static void smd_tty_log_init(void)
 	if (!smd_tty_log_ctx)
 		pr_debug("%s: Unable to create IPC log", __func__);
 }
+#endif
 
 static struct tty_driver *smd_tty_driver;
 
@@ -1037,7 +1049,9 @@ static int __init smd_tty_init(void)
 {
 	int rc;
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 	smd_tty_log_init();
+#endif
 	rc = platform_driver_register(&msm_smd_tty_driver);
 	if (rc) {
 		SMD_TTY_ERR("%s: msm_smd_tty_driver register failed %d\n",

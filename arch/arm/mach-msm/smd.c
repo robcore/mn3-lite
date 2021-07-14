@@ -44,7 +44,9 @@
 #include <mach/subsystem_notif.h>
 #include <mach/socinfo.h>
 #include <mach/proc_comm.h>
+#ifdef CONFIG_MSM_IPC_LOGGING
 #include <mach/msm_ipc_logging.h>
+#endif
 #include <mach/ramdump.h>
 #include <mach/board.h>
 #include <mach/msm_smem.h>
@@ -147,14 +149,15 @@ enum {
 int msm_smd_debug_mask = 0;
 module_param_named(debug_mask, msm_smd_debug_mask,
 		   int, 0644);
+#ifdef CONFIG_MSM_IPC_LOGGING
 void *smd_log_ctx;
 void *smsm_log_ctx;
 #define NUM_LOG_PAGES 4
-
+#endif
 #define IPC_LOG_SMD(level, x...) do { } while (0)
 #define IPC_LOG_SMSM(level, x...) do { } while (0)
 
-#if defined(CONFIG_MSM_SMD_DEBUG)
+#if defined(CONFIG_MSM_SMD_DEBUG) && defined(CONFIG_MSM_IPC_LOGGING)
 #define SMD_DBG(x...) do {				\
 		if (msm_smd_debug_mask & MSM_SMD_DEBUG) \
 			IPC_LOG_SMD(KERN_DEBUG, x);	\

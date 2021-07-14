@@ -28,7 +28,9 @@
 #include <mach/subsystem_notif.h>
 #include <mach/subsystem_restart.h>
 #include <mach/msm_serial_hs.h>
+#ifdef CONFIG_MSM_IPC_LOGGING
 #include <mach/msm_ipc_logging.h>
+#endif
 #include "smux_private.h"
 #include "smux_loopback.h"
 
@@ -64,8 +66,9 @@ static int smux_debug_mask = MSM_SMUX_DEBUG | MSM_SMUX_POWER_INFO;
 module_param_named(debug_mask, smux_debug_mask,
 		   int, S_IRUGO | S_IWUSR | S_IWGRP);
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 static int disable_ipc_logging;
-
+#endif
 /* Simulated wakeup used for testing */
 int smux_byte_loopback;
 module_param_named(byte_loopback, smux_byte_loopback,
@@ -74,6 +77,7 @@ int smux_simulate_wakeup_delay = 1;
 module_param_named(simulate_wakeup_delay, smux_simulate_wakeup_delay,
 		   int, S_IRUGO | S_IWUSR | S_IWGRP);
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 #define IPC_LOG_STR(x...) do { \
 	if (!disable_ipc_logging && log_ctx) \
 		ipc_log_string(log_ctx, x); \
@@ -127,6 +131,34 @@ module_param_named(simulate_wakeup_delay, smux_simulate_wakeup_delay,
 	if (smux_debug_mask & MSM_SMUX_PKT) \
 			smux_log_pkt(pkt, 0); \
 } while (0)
+#else
+#define IPC_LOG_STR(x...) do { \
+} while (0)
+
+#define SMUX_DBG(x...) do {                              \
+} while (0)
+
+#define SMUX_ERR(x...) do {                              \
+} while (0)
+
+#define SMUX_PWR(x...) do {                              \
+} while (0)
+
+#define SMUX_PWR_PKT_RX(pkt) do { \
+} while (0)
+
+#define SMUX_PWR_PKT_TX(pkt) do { \
+} while (0)
+
+#define SMUX_PWR_BYTE_TX(pkt) do { \
+} while (0)
+
+#define SMUX_LOG_PKT_RX(pkt) do { \
+} while (0)
+
+#define SMUX_LOG_PKT_TX(pkt) do { \
+} while (0)
+#endif
 
 /**
  * Return true if channel is fully opened (both
@@ -3904,13 +3936,13 @@ static int __init smux_init(void)
 		SMUX_ERR("%s: lch_init failed\n", __func__);
 		return ret;
 	}
-
+#ifdef CONFIG_MSM_IPC_LOGGING
 	log_ctx = ipc_log_context_create(20, "smux", 0);
 	if (!log_ctx) {
 		pr_debug("%s: unable to create log context\n", __func__);
 		disable_ipc_logging = 1;
 	}
-
+#endif
 	return 0;
 }
 

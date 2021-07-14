@@ -1205,17 +1205,6 @@ static int ngd_notify_slaves(void *data)
 				ret = slim_get_logical_addr(sbdev,
 						sbdev->e_addr,
 						6, &sbdev->laddr);
-#if defined(CONFIG_MACH_KLTE_TMO)
-				if (system_rev == 0xd) {
-					pr_info("%s : system rev = %d\n", __func__, system_rev);
-					if ((ret == -ENXIO) &&
-						((sbdev->e_addr[4] == 0xbe) && (sbdev->e_addr[2] == 0x83))) {
-						pr_info("%s : es704 fail to assign retry to assign the es705\n", __func__);
-						sbdev->e_addr[2] = 0x03;
-						ret = slim_get_logical_addr(sbdev, sbdev->e_addr, 6, &sbdev->laddr);		
-					}
-				}
-#endif
 				if (!ret)
 					break;
 				else /* time for ADSP to assign LA */
@@ -1262,20 +1251,26 @@ static void ngd_adsp_up(struct work_struct *work)
 static ssize_t show_mask(struct device *device, struct device_attribute *attr,
 			char *buf)
 {
+#ifdef CONFIG_MSM_IPC_LOGGING
 	struct platform_device *pdev = to_platform_device(device);
 	struct msm_slim_ctrl *dev = platform_get_drvdata(pdev);
 	return snprintf(buf, sizeof(int), "%u\n", dev->ipc_log_mask);
+#else
+	return snprintf(buf, sizeof(int), "%u\n", 0);
+#endif
 }
 
 static ssize_t set_mask(struct device *device, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
+#ifdef CONFIG_MSM_IPC_LOGGING
 	struct platform_device *pdev = to_platform_device(device);
 	struct msm_slim_ctrl *dev = platform_get_drvdata(pdev);
 
 	dev->ipc_log_mask = buf[0] - '0';
 	if (dev->ipc_log_mask > DBG_LEV)
 		dev->ipc_log_mask = DBG_LEV;
+#endif
 	return count;
 }
 
@@ -1326,6 +1321,7 @@ static int __devinit ngd_slim_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, dev);
 	slim_set_ctrldata(&dev->ctrl, dev);
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 	/* Create IPC log context */
 	dev->ipc_slimbus_log = ipc_log_context_create(IPC_SLIMBUS_LOG_PAGES,
 						dev_name(dev->dev), 0);
@@ -1338,6 +1334,7 @@ static int __devinit ngd_slim_probe(struct platform_device *pdev)
 		SLIM_INFO(dev, "start logging for slim dev %s\n",
 				dev_name(dev->dev));
 	}
+#endif
 	ret = sysfs_create_file(&dev->dev->kobj, &dev_attr_debug_mask.attr);
 	if (ret) {
 		dev_err(&pdev->dev, "Failed to create dev. attr\n");

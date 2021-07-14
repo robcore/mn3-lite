@@ -20,7 +20,9 @@
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
 #include <mach/msm_smem.h>
+#ifdef CONFIG_MSM_IPC_LOGGING
 #include <mach/msm_ipc_logging.h>
+#endif
 #include "smp2p_private_api.h"
 #include "smp2p_private.h"
 
@@ -70,7 +72,10 @@ struct smp2p_out_list_item {
 };
 static struct smp2p_out_list_item out_list[SMP2P_NUM_PROCS];
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 static void *log_ctx;
+#endif
+
 static int smp2p_debug_mask = MSM_SMP2P_INFO | MSM_SMP2P_DEBUG;
 module_param_named(debug_mask, smp2p_debug_mask,
 		   int, S_IRUGO | S_IWUSR | S_IWGRP);
@@ -213,6 +218,7 @@ static struct smp2p_interrupt_config smp2p_int_cfgs[SMP2P_NUM_PROCS] = {
 	[SMP2P_REMOTE_MOCK_PROC].name = "mock",
 };
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 /**
  * smp2p_get_log_ctx - Return log context for other SMP2P modules.
  *
@@ -222,7 +228,7 @@ void *smp2p_get_log_ctx(void)
 {
 	return log_ctx;
 }
-
+#endif
 /**
  * smp2p_get_debug_mask - Return debug mask.
  *
@@ -1828,11 +1834,11 @@ static int __init msm_smp2p_init(void)
 		INIT_LIST_HEAD(&in_list[i].list);
 		in_list[i].smem_edge_in = NULL;
 	}
-
+#ifdef CONFIG_MSM_IPC_LOGGING
 	log_ctx = ipc_log_context_create(NUM_LOG_PAGES, "smp2p", 0);
 	if (!log_ctx)
 		pr_debug("%s: unable to create log context\n", __func__);
-
+#endif
 	rc = platform_driver_register(&msm_smp2p_driver);
 	if (rc) {
 		SMP2P_ERR("%s: msm_smp2p_driver register failed %d\n",

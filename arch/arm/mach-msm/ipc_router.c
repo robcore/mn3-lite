@@ -10,8 +10,6 @@
  * GNU General Public License for more details.
  */
 
-#define DEBUG
-
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -54,11 +52,11 @@ static int msm_ipc_router_debug_mask;
 module_param_named(debug_mask, msm_ipc_router_debug_mask,
 		   int, S_IRUGO | S_IWUSR | S_IWGRP);
 
+#ifdef CONFIG_MSM_IPC_LOGGING
 static void *ipc_rtr_log_ctxt;
 #define IPC_RTR_LOG_PAGES 5
 #define DIAG(x...) pr_info("[RR] ERROR " x)
 
-#if defined(DEBUG)
 #define D(x...) do { \
 if (ipc_rtr_log_ctxt) \
 	ipc_log_string(ipc_rtr_log_ctxt, x); \
@@ -3332,12 +3330,13 @@ static int __init msm_ipc_router_init(void)
 	struct msm_ipc_routing_table_entry *rt_entry;
 
 	msm_ipc_router_debug_mask |= SMEM_LOG;
+#ifdef CONFIG_MSM_IPC_LOGGING
 	ipc_rtr_log_ctxt = ipc_log_context_create(IPC_RTR_LOG_PAGES,
 						  "ipc_router", 0);
 	if (!ipc_rtr_log_ctxt)
 		pr_debug("%s: Unable to create IPC logging for IPC RTR",
 			__func__);
-
+#endif
 	msm_ipc_router_workqueue =
 		create_singlethread_workqueue("msm_ipc_router");
 	if (!msm_ipc_router_workqueue)

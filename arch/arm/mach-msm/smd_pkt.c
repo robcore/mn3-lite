@@ -35,8 +35,9 @@
 
 #include <mach/msm_smd.h>
 #include <mach/subsystem_restart.h>
+#ifdef CONFIG_MSM_IPC_LOGGING
 #include <mach/msm_ipc_logging.h>
-
+#endif
 #include "smd_private.h"
 #ifdef CONFIG_ARCH_FSM9XXX
 #define NUM_SMD_PKT_PORTS 4
@@ -104,10 +105,7 @@ enum {
 	SMD_PKT_POLL = 1U << 5,
 };
 
-#define DEBUG
-
-#ifdef DEBUG
-
+#ifdef CONFIG_MSM_IPC_LOGGING
 #define SMD_PKT_LOG_STRING(x...) \
 do { \
 	if (smd_pkt_ilctxt) \

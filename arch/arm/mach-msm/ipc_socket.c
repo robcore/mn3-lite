@@ -41,6 +41,7 @@
 #define IND_IPC_LOG_PAGES 5
 #define IPC_SEND 1
 #define IPC_RECV 2
+#ifdef CONFIG_MSM_IPC_LOGGING
 #define IPC_REQ_RESP_LOG(level, buf...) \
 do { \
 	if (ipc_req_resp_log_txt) { \
@@ -54,7 +55,15 @@ do { \
 		ipc_log_string(ipc_ind_log_txt, buf); \
 	} \
 } while (0) \
+#else
+#define IPC_REQ_RESP_LOG(level, buf...) \
+do { \
+} while (0) \
 
+#define IPC_IND_LOG(level, buf...) \
+do { \
+} while (0) \
+#endif
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
 #endif
@@ -62,9 +71,10 @@ do { \
 static int sockets_enabled;
 static struct proto msm_ipc_proto;
 static const struct proto_ops msm_ipc_proto_ops;
+#ifdef CONFIG_MSM_IPC_LOGGING
 static void *ipc_req_resp_log_txt;
 static void *ipc_ind_log_txt;
-
+#endif
 /**
  * msm_ipc_router_ipc_log() - Pass log data to IPC logging framework
  * @tran:	Identifies the data to be a receive or send.
@@ -80,6 +90,7 @@ static void *ipc_ind_log_txt;
 static void msm_ipc_router_ipc_log(uint8_t tran,
 			struct sk_buff *ipc_buf, struct msm_ipc_port *port_ptr)
 {
+#ifdef CONFIG_MSM_IPC_LOGGING
 	struct qmi_header *hdr = (struct qmi_header *)ipc_buf->data;
 
 	/*
@@ -120,6 +131,7 @@ static void msm_ipc_router_ipc_log(uint8_t tran,
 			(uint8_t)hdr->cntl_flag, hdr->txn_id, hdr->msg_id,
 			hdr->msg_len);
 	}
+#endif
 }
 
 static struct sk_buff_head *msm_ipc_router_build_msg(unsigned int num_sect,
@@ -374,8 +386,10 @@ static int msm_ipc_router_sendmsg(struct kiocb *iocb, struct socket *sock,
 	if (port_ptr->type == CLIENT_PORT)
 		wait_for_irsc_completion();
 	ipc_buf = skb_peek(msg);
+#ifdef CONFIG_MSM_IPC_LOGGING
 	if (ipc_buf)
 		msm_ipc_router_ipc_log(IPC_SEND, ipc_buf, port_ptr);
+#endif
 	ret = msm_ipc_router_send_to(port_ptr, msg, &dest->address);
 	if (ret != total_len) {
 		if (ret < 0) {
@@ -428,8 +442,10 @@ static int msm_ipc_router_recvmsg(struct kiocb *iocb, struct socket *sock,
 
 	ret = msm_ipc_router_extract_msg(m, pkt);
 	ipc_buf = skb_peek(pkt->pkt_fragment_q);
+#ifdef CONFIG_MSM_IPC_LOGGING
 	if (ipc_buf)
 		msm_ipc_router_ipc_log(IPC_RECV, ipc_buf, port_ptr);
+#endif
 	release_pkt(pkt);
 	release_sock(sk);
 	return ret;
@@ -632,6 +648,7 @@ static struct proto msm_ipc_proto = {
  */
 void msm_ipc_router_ipc_log_init(void)
 {
+#ifdef CONFIG_MSM_IPC_LOGGING
 	ipc_req_resp_log_txt =
 		ipc_log_context_create(REQ_RESP_IPC_LOG_PAGES,
 			"ipc_rtr_req_resp", 0);
@@ -645,6 +662,7 @@ void msm_ipc_router_ipc_log_init(void)
 		pr_debug("%s: Unable to create IPC logging for Indications",
 			__func__);
 	}
+#endif
 }
 
 int msm_ipc_router_init_sockets(void)
@@ -665,7 +683,9 @@ int msm_ipc_router_init_sockets(void)
 	}
 
 	sockets_enabled = 1;
+#ifdef CONFIG_MSM_IPC_LOGGING
 	msm_ipc_router_ipc_log_init();
+#endif
 out_init_sockets:
 	return ret;
 }
