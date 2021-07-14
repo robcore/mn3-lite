@@ -228,6 +228,11 @@ void *smp2p_get_log_ctx(void)
 {
 	return log_ctx;
 }
+#else
+void *smp2p_get_log_ctx(void)
+{
+	return NULL;
+}
 #endif
 /**
  * smp2p_get_debug_mask - Return debug mask.
