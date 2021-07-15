@@ -1931,7 +1931,9 @@ static ssize_t run_store(struct kobject *kobj, struct kobj_attribute *attr,
 	unsigned long flags;
 
 	err = strict_strtoul(buf, 10, &flags);
-	if (err || flags > UINT_MAX || flags > KSM_RUN_UNMERGE)
+	if (err || flags > UINT_MAX)
+		return -EINVAL;
+	if (flags > KSM_RUN_UNMERGE)
 		return -EINVAL;
 
 	/*
@@ -1944,7 +1946,7 @@ static ssize_t run_store(struct kobject *kobj, struct kobj_attribute *attr,
 	mutex_lock(&ksm_thread_mutex);
 	if (ksm_run != flags) {
 		ksm_run = flags;
-		if (flags & KSM_RUN_UNMERGE || flags & KSM_RUN_STOP) {
+		if (flags & KSM_RUN_UNMERGE) {
 			int oom_score_adj;
 
 			oom_score_adj = test_set_oom_score_adj(OOM_SCORE_ADJ_MAX);
