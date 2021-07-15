@@ -202,6 +202,8 @@ getmxrecent() {
 		then
 			git add "$MXCONFIG"
 			git commit -a -m 'mxconfig updated from build'
+            git push
+            git status
 		fi
 	fi
 }
