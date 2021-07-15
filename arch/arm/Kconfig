@@ -2021,7 +2021,7 @@ config ARM_PLD_64BYTE
 
 config USE_LDRDSTRD_OVER_LDMSTM
     bool "Use 64-bit access instructions to optimize memory copy"
-      depnds on CPU_V7
+      depends on CPU_V7
       help
       Cortex-A15 perform better when use LDRD/STRD to access memory.
       Selecting this to optimize memory copy routines.
