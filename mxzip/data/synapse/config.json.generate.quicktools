@@ -59,27 +59,14 @@ cat << CTAG
                 height: 1
             }},
             { STitleBar:{
-                title:"Quick Memory Dropper"
+                title:"Memory Dropper"
             }},
             { SDescription:{
-                description:"Easy access to drop unused memory accounted by the kernel."
+                description:"Easy access to drop all possible memory including vm, tcp caches, and user space."
             }},
             { SButton:{
                 label:"Dropper",
                 action:"utils dropper"
-            }},
-            { SSpacer:{
-                height: 1
-            }},
-            { STitleBar:{
-                title:"TCP Route Cache Flush"
-            }},
-            { SDescription:{
-                description:"Easy access to flush tcp route cache."
-            }},
-            { SButton:{
-                label:"TCP Flush",
-                action:"utils flushtcp"
             }},
             { SSpacer:{
                 height: 1
@@ -93,6 +80,19 @@ cat << CTAG
             { SButton:{
                 label:"Tinymix Dump",
                 action:"utils tmixdump"
+            }},
+            { SSpacer:{
+                height: 1
+            }},
+            { STitleBar:{
+                title:"Restart UserSpace"
+            }},
+            { SDescription:{
+                description:"Soft Reset User Space using the Activity Manager."
+            }},
+            { SButton:{
+                label:"Soft Restart",
+                action:"utils amrestart"
             }},
         ]
     }

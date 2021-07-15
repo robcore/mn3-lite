@@ -2,31 +2,45 @@
 
 if [ "$1" = "dropper" ]
 then
+    am kill-all
+    echo '1' > /proc/sys/net/ipv4/route/flush
+    echo '1' > /proc/sys/net/ipv6/route/flush
 	echo '3' > /proc/sys/vm/drop_caches
+    pm trim-caches 3g
+    am kill-all
+    am idle-maintenance
 	echo "Memory Dropped"
 elif [ "$1" = "killsysui" ]
 then
     SYSUIPID="$(pidof com.android.systemui)"
-    if kill -9 "$SYSUIPID"
+    if [ -z "$(echo $SYSUIPID)" ]
     then
-        echo "SystemUI Rebooted"
-    else
         echo "SystemUI Reboot Failed"
+    else
+        if kill -9 "$SYSUIPID"
+        then
+            echo "SystemUI Rebooted"
+        else
+            echo "SystemUI Reboot Failed"
+        fi
     fi
 elif [ "$1" = "killviper" ]
 then
     VPPID="$(pidof com.audlabs.viperfx)"
-    if kill -9 "$VPPID"
+    if [ -z "$(echo $VPPID)" ]
     then
-        echo "ViperFX Restarted"
-    else
         echo "ViperFX Restart Failed"
+        if kill -9 "$VPPID"
+        then
+            echo "ViperFX Restarted"
+        else
+           echo "ViperFX Restart Failed"
+        fi
     fi
-elif [ "$1" = "flushtcp" ]
+elif [ "$1" = "amrestart" ]
 then
-    echo '1' > /proc/sys/net/ipv4/route/flush
-    echo '1' > /proc/sys/net/ipv6/route/flush
-    echo "TCP Cache Flushed"
+    echo "Restarting UserSpace"
+    am restart
 elif [ "$1" = "tmixdump" ]
 then
     TPATH="/storage/extSdCard/mx3_tmix/tmix-$(busybox date +%F-%H-%M).txt"
