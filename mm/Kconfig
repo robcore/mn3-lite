@@ -467,7 +467,7 @@ config INCREASE_MAXIMUM_SWAPPINESS
 	default n
 
 config FIX_INACTIVE_RATIO
-	bool "Fix active:inactive anon ratio to 3:1"
+	bool "Fix active:inactive anon ratio to 1:1"
 	depends on ZSWAP
 	default n
 
