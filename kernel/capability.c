@@ -39,7 +39,7 @@ __setup("no_file_caps", file_caps_disable);
  *
  *   http://www.kernel.org/pub/linux/libs/security/linux-privs/
  */
-
+#if 0
 static void warn_legacy_capability_use(void)
 {
 	static int warned;
@@ -52,6 +52,7 @@ static void warn_legacy_capability_use(void)
 		warned = 1;
 	}
 }
+#endif
 
 /*
  * Version 2 capabilities worked fine, but the linux/capability.h file
@@ -69,6 +70,7 @@ static void warn_legacy_capability_use(void)
  * away.
  */
 
+#if 0
 static void warn_deprecated_v2(void)
 {
 	static int warned;
@@ -82,6 +84,7 @@ static void warn_deprecated_v2(void)
 		warned = 1;
 	}
 }
+#endif
 
 /*
  * Version check. Return the number of u32s in each capability flag
@@ -96,11 +99,15 @@ static int cap_validate_magic(cap_user_header_t header, unsigned *tocopy)
 
 	switch (version) {
 	case _LINUX_CAPABILITY_VERSION_1:
+#if 0
 		warn_legacy_capability_use();
+#endif
 		*tocopy = _LINUX_CAPABILITY_U32S_1;
 		break;
 	case _LINUX_CAPABILITY_VERSION_2:
+#if 0
 		warn_deprecated_v2();
+#endif
 		/*
 		 * fall through - v3 is otherwise equivalent to v2.
 		 */
