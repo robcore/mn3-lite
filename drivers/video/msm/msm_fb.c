@@ -3574,7 +3574,7 @@ static int msmfb_handle_buf_sync_ioctl(struct msm_fb_data_type *mfd,
 		goto buf_sync_err_1;
 	}
 	/* create fence */
-	mfd->cur_rel_fence = sync_fence_create("mdp-fence",
+	mfd->cur_rel_fence = sync_fence_create("",
 			mfd->cur_rel_sync_pt);
 	if (mfd->cur_rel_fence == NULL) {
 		sync_pt_free(mfd->cur_rel_sync_pt);
@@ -3640,7 +3640,7 @@ static int buf_fence_process(struct msm_fb_data_type *mfd,
 		goto buf_fence_err_1;
 	}
 	/* create fence */
-	mfd->cur_rel_fence = sync_fence_create("mdp-fence",
+	mfd->cur_rel_fence = sync_fence_create("",
 			mfd->cur_rel_sync_pt);
 	if (mfd->cur_rel_fence == NULL) {
 		sync_pt_free(mfd->cur_rel_sync_pt);

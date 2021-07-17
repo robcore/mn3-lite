@@ -979,7 +979,7 @@ static int mdp3_ppp_handle_buf_sync(struct blit_req_list *req,
 		goto buf_sync_err_2;
 	}
 	/* create fence */
-	req->cur_rel_fence = sync_fence_create("ppp-fence",
+	req->cur_rel_fence = sync_fence_create("",
 			req->cur_rel_sync_pt);
 	if (req->cur_rel_fence == NULL) {
 		sync_pt_free(req->cur_rel_sync_pt);
