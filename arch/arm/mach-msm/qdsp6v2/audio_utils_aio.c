@@ -446,31 +446,32 @@ static void audio_aio_unmap_ion_region(struct q6audio_aio *audio)
 
 #ifdef CONFIG_USE_DEV_CTRL_VOLUME
 
-static void audio_aio_listner(u32 evt_id, union auddev_evt_data *evt_payload,
+static void audio_aio_listener(u32 evt_id, union auddev_evt_data *evt_payload,
 			void *private_data)
 {
-	struct q6audio_aio *audio = (struct q6audio_aio *) private_data;
+	struct q6audio_aio *audio;
 	int rc  = 0;
 
-	switch (evt_id) {
-	case AUDDEV_EVT_STREAM_VOL_CHG:
-		audio->volume = evt_payload->session_vol;
-		pr_debug("%s[%p]: AUDDEV_EVT_STREAM_VOL_CHG, stream vol %d, enabled = %d\n",
-			__func__, audio, audio->volume, audio->enabled);
-		if (audio->enabled == 1) {
-			if (audio->ac) {
-				rc = q6asm_set_volume(audio->ac, audio->volume);
-				if (rc < 0) {
-					pr_err("%s[%p]: Send Volume command failed rc=%d\n",
-						__func__, audio, rc);
-				}
-			}
-		}
-		break;
-	default:
-		pr_err("%s[%p]:ERROR:wrong event\n", __func__, audio);
-		break;
-	}
+    audio = (struct q6audio_aio *) private_data;
+    if (audio) {
+    	switch (evt_id) {
+    	case AUDDEV_EVT_STREAM_VOL_CHG:
+    		audio->volume = evt_payload->session_vol;
+    		if (audio->enabled == 1) {
+    			if (audio->ac) {
+    				rc = q6asm_set_volume(audio->ac, audio->volume);
+    				if (rc < 0) {
+    					pr_err("%s[%p]: Send Volume command failed rc=%d\n",
+    						__func__, audio, rc);
+    				}
+    			}
+    		}
+    		break;
+    	default:
+    		pr_err("%s[%p]:ERROR:wrong event\n", __func__, audio);
+    		break;
+    	}
+    }
 }
 
 int register_volume_listener(struct q6audio_aio *audio)
@@ -482,7 +483,7 @@ int register_volume_listener(struct q6audio_aio *audio)
 	rc = auddev_register_evt_listner(audio->device_events,
 					AUDDEV_CLNT_DEC,
 					audio->ac->session,
-					audio_aio_listner,
+					audio_aio_listener,
 					(void *)audio);
 	if (rc < 0) {
 		pr_err("%s[%p]: Event listener failed\n", __func__, audio);

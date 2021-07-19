@@ -530,7 +530,7 @@ struct uid_tag_data *get_uid_data(uid_t uid, bool *found_res)
 
 	utd_entry = kzalloc(sizeof(*utd_entry), GFP_ATOMIC);
 	if (!utd_entry) {
-		pr_err("qtaguid: get_uid_data(%u): "
+		pr_debug("qtaguid: get_uid_data(%u): "
 		       "tag data alloc failed\n", uid);
 		return ERR_PTR(-ENOMEM);
 	}
@@ -550,7 +550,7 @@ static struct tag_ref *new_tag_ref(tag_t new_tag,
 	int res;
 
 	if (utd_entry->num_active_tags + 1 > max_sock_tags) {
-		pr_info("qtaguid: new_tag_ref(0x%llx): "
+		pr_debug("qtaguid: new_tag_ref(0x%llx): "
 			"tag ref alloc quota exceeded. max=%d\n",
 			new_tag, max_sock_tags);
 		res = -EMFILE;
@@ -560,7 +560,7 @@ static struct tag_ref *new_tag_ref(tag_t new_tag,
 
 	tr_entry = kzalloc(sizeof(*tr_entry), GFP_ATOMIC);
 	if (!tr_entry) {
-		pr_err("qtaguid: new_tag_ref(0x%llx): "
+		pr_debug("qtaguid: new_tag_ref(0x%llx): "
 		       "tag ref alloc failed\n",
 		       new_tag);
 		res = -ENOMEM;
@@ -754,7 +754,7 @@ static struct iface_stat *get_iface_entry(const char *ifname)
 
 	/* Find the entry for tracking the specified tag within the interface */
 	if (ifname == NULL) {
-		pr_info("qtaguid: iface_stat: get() NULL device name\n");
+		pr_debug("qtaguid: iface_stat: get() NULL device name\n");
 		return NULL;
 	}
 
@@ -917,7 +917,7 @@ static void iface_create_proc_worker(struct work_struct *work)
 	/* iface_entries are not deleted, so safe to manipulate. */
 	proc_entry = proc_mkdir(new_iface->ifname, iface_stat_procdir);
 	if (IS_ERR_OR_NULL(proc_entry)) {
-		pr_err("qtaguid: iface_stat: create_proc(): alloc failed.\n");
+		pr_debug("qtaguid: iface_stat: create_proc(): alloc failed.\n");
 		kfree(isw);
 		return;
 	}
@@ -978,13 +978,13 @@ static struct iface_stat *iface_alloc(struct net_device *net_dev)
 
 	new_iface = kzalloc(sizeof(*new_iface), GFP_ATOMIC);
 	if (new_iface == NULL) {
-		pr_err("qtaguid: iface_stat: create(%s): "
+		pr_debug("qtaguid: iface_stat: create(%s): "
 		       "iface_stat alloc failed\n", net_dev->name);
 		return NULL;
 	}
 	new_iface->ifname = kstrdup(net_dev->name, GFP_ATOMIC);
 	if (new_iface->ifname == NULL) {
-		pr_err("qtaguid: iface_stat: create(%s): "
+		pr_debug("qtaguid: iface_stat: create(%s): "
 		       "ifname alloc failed\n", net_dev->name);
 		kfree(new_iface);
 		return NULL;
@@ -999,7 +999,7 @@ static struct iface_stat *iface_alloc(struct net_device *net_dev)
 	 */
 	isw = kmalloc(sizeof(*isw), GFP_ATOMIC);
 	if (!isw) {
-		pr_err("qtaguid: iface_stat: create(%s): "
+		pr_debug("qtaguid: iface_stat: create(%s): "
 		       "work alloc failed\n", new_iface->ifname);
 		_iface_stat_set_active(new_iface, net_dev, false);
 		kfree(new_iface->ifname);
@@ -1035,7 +1035,7 @@ static void iface_check_stats_reset_and_adjust(struct net_device *net_dev,
 		 iface->active, iface->last_known_valid, stats_rewound);
 
 	if (iface->active && iface->last_known_valid && stats_rewound) {
-		pr_warn_once("qtaguid: iface_stat: %s(%s): "
+		pr_debug("qtaguid: iface_stat: %s(%s): "
 			     "iface reset its stats unexpectedly\n", __func__,
 			     net_dev->name);
 
@@ -1073,7 +1073,7 @@ static void iface_stat_create(struct net_device *net_dev,
 		 net_dev ? net_dev->name : "?",
 		 ifa, net_dev);
 	if (!net_dev) {
-		pr_err("qtaguid: iface_stat: create(): no net dev\n");
+		pr_debug("qtaguid: iface_stat: create(): no net dev\n");
 		return;
 	}
 
@@ -1081,7 +1081,7 @@ static void iface_stat_create(struct net_device *net_dev,
 	if (!ifa) {
 		in_dev = in_dev_get(net_dev);
 		if (!in_dev) {
-			pr_err("qtaguid: iface_stat: create(%s): no inet dev\n",
+			pr_debug("qtaguid: iface_stat: create(%s): no inet dev\n",
 			       ifname);
 			return;
 		}
@@ -1139,14 +1139,14 @@ static void iface_stat_create_ipv6(struct net_device *net_dev,
 	IF_DEBUG("qtaguid: iface_stat: create6(): ifa=%p netdev=%p->name=%s\n",
 		 ifa, net_dev, net_dev ? net_dev->name : "");
 	if (!net_dev) {
-		pr_err("qtaguid: iface_stat: create6(): no net dev!\n");
+		pr_debug("qtaguid: iface_stat: create6(): no net dev!\n");
 		return;
 	}
 	ifname = net_dev->name;
 
 	in_dev = in_dev_get(net_dev);
 	if (!in_dev) {
-		pr_err("qtaguid: iface_stat: create6(%s): no inet dev\n",
+		pr_debug("qtaguid: iface_stat: create6(%s): no inet dev\n",
 		       ifname);
 		return;
 	}
@@ -1311,12 +1311,12 @@ static void get_dev_and_dir(const struct sk_buff *skb,
 		*el_dev = par->out;
 		*direction = IFS_TX;
 	} else {
-		pr_err("qtaguid[%d]: %s(): no par->in/out?!!\n",
+		pr_debug("qtaguid[%d]: %s(): no par->in/out?!!\n",
 		       par->hooknum, __func__);
 		BUG();
 	}
 	if (unlikely(!(*el_dev)->name)) {
-		pr_err("qtaguid[%d]: %s(): no dev->name?!!\n",
+		pr_debug("qtaguid[%d]: %s(): no dev->name?!!\n",
 		       par->hooknum, __func__);
 		BUG();
 	}
@@ -1397,7 +1397,7 @@ static struct tag_stat *create_if_tag_stat(struct iface_stat *iface_entry,
 		 iface_entry, tag, get_uid_from_tag(tag));
 	new_tag_stat_entry = kzalloc(sizeof(*new_tag_stat_entry), GFP_ATOMIC);
 	if (!new_tag_stat_entry) {
-		pr_err("qtaguid: iface_stat: tag stat alloc failed\n");
+		pr_debug("qtaguid: iface_stat: tag stat alloc failed\n");
 		goto done;
 	}
 	new_tag_stat_entry->tn.tag = tag;
@@ -1424,8 +1424,6 @@ static void if_tag_stat_update(const char *ifname, uid_t uid,
 	spin_lock_bh(&iface_stat_list_lock);
 	iface_entry = get_iface_entry(ifname);
 	if (!iface_entry) {
-		pr_err_ratelimited("qtaguid: tag_stat: stat_update() "
-				   "%s not found\n", ifname);
 		spin_unlock_bh(&iface_stat_list_lock);
 		return;
 	}
@@ -1610,7 +1608,7 @@ static int __init iface_stat_init(struct proc_dir_entry *parent_procdir)
 
 	iface_stat_procdir = proc_mkdir(iface_stat_procdirname, parent_procdir);
 	if (!iface_stat_procdir) {
-		pr_err("qtaguid: iface_stat: init failed to create proc entry\n");
+		pr_debug("qtaguid: iface_stat: init failed to create proc entry\n");
 		err = -1;
 		goto err;
 	}
@@ -1619,7 +1617,7 @@ static int __init iface_stat_init(struct proc_dir_entry *parent_procdir)
 						    proc_iface_perms,
 						    parent_procdir);
 	if (!iface_stat_all_procfile) {
-		pr_err("qtaguid: iface_stat: init "
+		pr_debug("qtaguid: iface_stat: init "
 		       " failed to create stat_old proc entry\n");
 		err = -1;
 		goto err_zap_entry;
@@ -1631,7 +1629,7 @@ static int __init iface_stat_init(struct proc_dir_entry *parent_procdir)
 						    proc_iface_perms,
 						    parent_procdir);
 	if (!iface_stat_fmt_procfile) {
-		pr_err("qtaguid: iface_stat: init "
+		pr_debug("qtaguid: iface_stat: init "
 		       " failed to create stat_all proc entry\n");
 		err = -1;
 		goto err_zap_all_stats_entry;
@@ -1642,20 +1640,20 @@ static int __init iface_stat_init(struct proc_dir_entry *parent_procdir)
 
 	err = register_netdevice_notifier(&iface_netdev_notifier_blk);
 	if (err) {
-		pr_err("qtaguid: iface_stat: init "
+		pr_debug("qtaguid: iface_stat: init "
 		       "failed to register dev event handler\n");
 		goto err_zap_all_stats_entries;
 	}
 	err = register_inetaddr_notifier(&iface_inetaddr_notifier_blk);
 	if (err) {
-		pr_err("qtaguid: iface_stat: init "
+		pr_debug("qtaguid: iface_stat: init "
 		       "failed to register ipv4 dev event handler\n");
 		goto err_unreg_nd;
 	}
 
 	err = register_inet6addr_notifier(&iface_inet6addr_notifier_blk);
 	if (err) {
-		pr_err("qtaguid: iface_stat: init "
+		pr_debug("qtaguid: iface_stat: init "
 		       "failed to register ipv6 dev event handler\n");
 		goto err_unreg_ip4_addr;
 	}
@@ -2066,14 +2064,14 @@ static int ctrl_cmd_delete(const char *input)
 		goto err;
 	}
 	if (!valid_atag(acct_tag)) {
-		pr_info("qtaguid: ctrl_delete(%s): invalid tag\n", input);
+		pr_debug("qtaguid: ctrl_delete(%s): invalid tag\n", input);
 		res = -EINVAL;
 		goto err;
 	}
 	if (argc < 3) {
 		uid = current_fsuid();
 	} else if (!can_impersonate_uid(uid)) {
-		pr_info("qtaguid: ctrl_delete(%s): "
+		pr_debug("qtaguid: ctrl_delete(%s): "
 			"insufficient priv from pid=%u tgid=%u uid=%u\n",
 			input, current->pid, current->tgid, current_fsuid());
 		res = -EPERM;
@@ -2220,13 +2218,13 @@ static int ctrl_cmd_counter_set(const char *input)
 		goto err;
 	}
 	if (counter_set < 0 || counter_set >= IFS_MAX_COUNTER_SETS) {
-		pr_info("qtaguid: ctrl_counterset(%s): invalid counter_set range\n",
+		pr_debug("qtaguid: ctrl_counterset(%s): invalid counter_set range\n",
 			input);
 		res = -EINVAL;
 		goto err;
 	}
 	if (!can_manipulate_uids()) {
-		pr_info("qtaguid: ctrl_counterset(%s): "
+		pr_debug("qtaguid: ctrl_counterset(%s): "
 			"insufficient priv from pid=%u tgid=%u uid=%u\n",
 			input, current->pid, current->tgid, current_fsuid());
 		res = -EPERM;
@@ -2240,7 +2238,7 @@ static int ctrl_cmd_counter_set(const char *input)
 		tcs = kzalloc(sizeof(*tcs), GFP_ATOMIC);
 		if (!tcs) {
 			spin_unlock_bh(&tag_counter_set_list_lock);
-			pr_err("qtaguid: ctrl_counterset(%s): "
+			pr_debug("qtaguid: ctrl_counterset(%s): "
 			       "failed to alloc counter set\n",
 			       input);
 			res = -ENOMEM;
@@ -2286,7 +2284,7 @@ static int ctrl_cmd_tag(const char *input)
 	}
 	el_socket = sockfd_lookup(sock_fd, &res);  /* This locks the file */
 	if (!el_socket) {
-		pr_info("qtaguid: ctrl_tag(%s): failed to lookup"
+		pr_debug("qtaguid: ctrl_tag(%s): failed to lookup"
 			" sock_fd=%d err=%d pid=%u tgid=%u uid=%u\n",
 			input, sock_fd, res, current->pid, current->tgid,
 			current_fsuid());
@@ -2298,7 +2296,7 @@ static int ctrl_cmd_tag(const char *input)
 	if (argc < 3) {
 		acct_tag = make_atag_from_value(0);
 	} else if (!valid_atag(acct_tag)) {
-		pr_info("qtaguid: ctrl_tag(%s): invalid tag\n", input);
+		pr_debug("qtaguid: ctrl_tag(%s): invalid tag\n", input);
 		res = -EINVAL;
 		goto err_put;
 	}
@@ -2313,7 +2311,7 @@ static int ctrl_cmd_tag(const char *input)
 	if (argc < 4) {
 		uid = current_fsuid();
 	} else if (!can_impersonate_uid(uid)) {
-		pr_info("qtaguid: ctrl_tag(%s): "
+		pr_debug("qtaguid: ctrl_tag(%s): "
 			"insufficient priv from pid=%u tgid=%u uid=%u\n",
 			input, current->pid, current->tgid, current_fsuid());
 		res = -EPERM;
@@ -2358,7 +2356,7 @@ static int ctrl_cmd_tag(const char *input)
 		sock_tag_entry = kzalloc(sizeof(*sock_tag_entry),
 					 GFP_ATOMIC);
 		if (!sock_tag_entry) {
-			pr_err("qtaguid: ctrl_tag(%s): "
+			pr_debug("qtaguid: ctrl_tag(%s): "
 			       "socket tag alloc failed\n",
 			       input);
 			BUG_ON(tag_ref_entry->num_sock_tags <= 0);
@@ -2383,7 +2381,7 @@ static int ctrl_cmd_tag(const char *input)
 		 * opening the /dev/xt_qtaguid.
 		 */
 		if (IS_ERR_OR_NULL(pqd_entry))
-			pr_warn_once(
+			pr_debug(
 				"qtaguid: %s(): "
 				"User space forgot to open /dev/xt_qtaguid? "
 				"pid=%u tgid=%u uid=%u\n", __func__,
@@ -2436,7 +2434,7 @@ static int ctrl_cmd_untag(const char *input)
 	}
 	el_socket = sockfd_lookup(sock_fd, &res);  /* This locks the file */
 	if (!el_socket) {
-		pr_info("qtaguid: ctrl_untag(%s): failed to lookup"
+		pr_debug("qtaguid: ctrl_untag(%s): failed to lookup"
 			" sock_fd=%d err=%d pid=%u tgid=%u uid=%u\n",
 			input, sock_fd, res, current->pid, current->tgid,
 			current_fsuid());
@@ -2470,7 +2468,7 @@ static int ctrl_cmd_untag(const char *input)
 	 * opening the /dev/xt_qtaguid.
 	 */
 	if (IS_ERR_OR_NULL(pqd_entry))
-		pr_warn_once("qtaguid: %s(): "
+		pr_debug("qtaguid: %s(): "
 			     "User space forgot to open /dev/xt_qtaguid? "
 			     "pid=%u tgid=%u uid=%u\n", __func__,
 			     current->pid, current->tgid, current_fsuid());
@@ -2769,7 +2767,7 @@ static int qtudev_open(struct inode *inode, struct file *file)
 	pqd_entry = proc_qtu_data_tree_search(&proc_qtu_data_tree,
 					      current->tgid);
 	if (pqd_entry) {
-		pr_err("qtaguid: qtudev_open(): %u/%u %u "
+		pr_debug("qtaguid: qtudev_open(): %u/%u %u "
 		       "%s already opened\n",
 		       current->pid, current->tgid, current_fsuid(),
 		       QTU_DEV_NAME);
@@ -2779,7 +2777,7 @@ static int qtudev_open(struct inode *inode, struct file *file)
 
 	new_pqd_entry = kzalloc(sizeof(*new_pqd_entry), GFP_ATOMIC);
 	if (!new_pqd_entry) {
-		pr_err("qtaguid: qtudev_open(): %u/%u %u: "
+		pr_debug("qtaguid: qtudev_open(): %u/%u %u: "
 		       "proc data alloc failed\n",
 		       current->pid, current->tgid, current_fsuid());
 		res = -ENOMEM;
@@ -2909,7 +2907,7 @@ static int __init qtaguid_proc_register(struct proc_dir_entry **res_procdir)
 	int ret;
 	*res_procdir = proc_mkdir(module_procdirname, init_net.proc_net);
 	if (!*res_procdir) {
-		pr_err("qtaguid: failed to create proc/.../xt_qtaguid\n");
+		pr_debug("qtaguid: failed to create proc/.../xt_qtaguid\n");
 		ret = -ENOMEM;
 		goto no_dir;
 	}
@@ -2917,7 +2915,7 @@ static int __init qtaguid_proc_register(struct proc_dir_entry **res_procdir)
 	xt_qtaguid_ctrl_file = create_proc_entry("ctrl", proc_ctrl_perms,
 						*res_procdir);
 	if (!xt_qtaguid_ctrl_file) {
-		pr_err("qtaguid: failed to create xt_qtaguid/ctrl "
+		pr_debug("qtaguid: failed to create xt_qtaguid/ctrl "
 			" file\n");
 		ret = -ENOMEM;
 		goto no_ctrl_entry;
@@ -2928,7 +2926,7 @@ static int __init qtaguid_proc_register(struct proc_dir_entry **res_procdir)
 	xt_qtaguid_stats_file = create_proc_entry("stats", proc_stats_perms,
 						*res_procdir);
 	if (!xt_qtaguid_stats_file) {
-		pr_err("qtaguid: failed to create xt_qtaguid/stats "
+		pr_debug("qtaguid: failed to create xt_qtaguid/stats "
 			"file\n");
 		ret = -ENOMEM;
 		goto no_stats_entry;

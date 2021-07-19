@@ -281,7 +281,7 @@ static void event_handler(uint32_t opcode,
 	}
 	break;
 	case RESET_EVENTS:
-		pr_err("%s RESET_EVENTS\n", __func__);
+		pr_debug("%s RESET_EVENTS\n", __func__);
 		prtd->pcm_irq_pos += prtd->pcm_count;
 		atomic_inc(&prtd->out_count);
 		atomic_inc(&prtd->in_count);
@@ -311,7 +311,7 @@ static int msm_pcm_playback_prepare(struct snd_pcm_substream *substream)
 	pdata = (struct msm_plat_data *)
 		dev_get_drvdata(soc_prtd->platform->dev);
 	if (!pdata) {
-		pr_err("%s: platform data not populated\n", __func__);
+		pr_debug("%s: platform data not populated\n", __func__);
 		return -EINVAL;
 	}
 
@@ -335,7 +335,7 @@ static int msm_pcm_playback_prepare(struct snd_pcm_substream *substream)
 	ret = q6asm_open_write_v2(prtd->audio_client,
 			FORMAT_LINEAR_PCM, bits_per_sample);
 	if (ret < 0) {
-		pr_err("%s: q6asm_open_write_v2 failed\n", __func__);
+		pr_debug("%s: q6asm_open_write_v2 failed\n", __func__);
 		q6asm_audio_client_free(prtd->audio_client);
 		prtd->audio_client = NULL;
 		return -ENOMEM;
@@ -388,7 +388,7 @@ static int msm_pcm_capture_prepare(struct snd_pcm_substream *substream)
     pdata = (struct msm_plat_data *)
         dev_get_drvdata(soc_prtd->platform->dev);
     if (!pdata) {
-        pr_err("%s: platform data not populated\n", __func__);
+        pr_debug("%s: platform data not populated\n", __func__);
         return -EINVAL;
     }
 
@@ -405,7 +405,7 @@ static int msm_pcm_capture_prepare(struct snd_pcm_substream *substream)
 	ret = q6asm_open_read_v2(prtd->audio_client, FORMAT_LINEAR_PCM,
 			bits_per_sample);
 	if (ret < 0) {
-		pr_err("%s: q6asm_open_read failed\n", __func__);
+		pr_debug("%s: q6asm_open_read failed\n", __func__);
 		q6asm_audio_client_free(prtd->audio_client);
 		prtd->audio_client = NULL;
 		return -ENOMEM;
@@ -530,7 +530,7 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 
 	prtd = kzalloc(sizeof(struct msm_audio), GFP_KERNEL);
 	if (prtd == NULL) {
-		pr_err("Failed to allocate memory for msm_audio\n");
+		pr_debug("Failed to allocate memory for msm_audio\n");
 		return -ENOMEM;
 	}
 	prtd->substream = substream;
@@ -549,7 +549,7 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 	else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 		runtime->hw = msm_pcm_hardware_capture;
 	else {
-		pr_err("Invalid Stream type %d\n", substream->stream);
+		pr_debug("Invalid Stream type %d\n", substream->stream);
 		return -EINVAL;
 	}
 
@@ -570,7 +570,7 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 			PLAYBACK_MIN_NUM_PERIODS * PLAYBACK_MIN_PERIOD_SIZE,
 			PLAYBACK_MAX_NUM_PERIODS * PLAYBACK_MAX_PERIOD_SIZE);
 		if (ret < 0) {
-			pr_err("constraint for buffer bytes min max ret = %d\n",
+			pr_debug("constraint for buffer bytes min max ret = %d\n",
 									ret);
 		}
 	}
@@ -581,20 +581,20 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 			CAPTURE_MIN_NUM_PERIODS * CAPTURE_MIN_PERIOD_SIZE,
 			CAPTURE_MAX_NUM_PERIODS * CAPTURE_MAX_PERIOD_SIZE);
 		if (ret < 0) {
-			pr_err("constraint for buffer bytes min max ret = %d\n",
+			pr_debug("constraint for buffer bytes min max ret = %d\n",
 									ret);
 		}
 	}
 	ret = snd_pcm_hw_constraint_step(runtime, 0,
 		SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 32);
 	if (ret < 0) {
-		pr_err("constraint for period bytes step ret = %d\n",
+		pr_debug("constraint for period bytes step ret = %d\n",
 								ret);
 	}
 	ret = snd_pcm_hw_constraint_step(runtime, 0,
 		SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 32);
 	if (ret < 0) {
-		pr_err("constraint for buffer bytes step ret = %d\n",
+		pr_debug("constraint for buffer bytes step ret = %d\n",
 								ret);
 	}
 
@@ -625,24 +625,24 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 				__func__, atomic_read(&prtd->out_count));
 
 	if (prtd->reset_event) {
-		pr_err("%s: In SSR return ENETRESET before wait\n", __func__);
+		pr_debug("%s: In SSR return ENETRESET before wait\n", __func__);
 		return -ENETRESET;
 	}
 
 	ret = wait_event_timeout(the_locks.write_wait,
 			(atomic_read(&prtd->out_count)), 5 * HZ);
 	if (!ret) {
-		pr_err("%s: wait_event_timeout failed\n", __func__);
+		pr_debug("%s: wait_event_timeout failed\n", __func__);
 		goto fail;
 	}
 
 	if (prtd->reset_event) {
-		pr_err("%s: In SSR return ENETRESET after wait\n", __func__);
+		pr_debug("%s: In SSR return ENETRESET after wait\n", __func__);
 		return -ENETRESET;
 	}
 
 	if (!atomic_read(&prtd->out_count)) {
-		pr_err("%s: pcm stopped out_count 0\n", __func__);
+		pr_debug("%s: pcm stopped out_count 0\n", __func__);
 		return 0;
 	}
 
@@ -695,7 +695,7 @@ static int msm_pcm_playback_close(struct snd_pcm_substream *substream)
 					 !test_bit(CMD_EOS, &prtd->cmd_pending),
 					 5 * HZ);
 		if (!ret)
-			pr_err("%s: CMD_EOS failed, cmd_pending 0x%lx\n",
+			pr_debug("%s: CMD_EOS failed, cmd_pending 0x%lx\n",
 			       __func__, prtd->cmd_pending);
 		q6asm_cmd(prtd->audio_client, CMD_CLOSE);
 		q6asm_audio_client_buf_free_contiguous(dir,
@@ -732,7 +732,7 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 	pr_debug("avail_min %d\n", (int)runtime->control->avail_min);
 
 	if (prtd->reset_event) {
-		pr_err("%s: In SSR return ENETRESET before wait\n", __func__);
+		pr_debug("%s: In SSR return ENETRESET before wait\n", __func__);
 		return -ENETRESET;
 	}
 	ret = wait_event_timeout(the_locks.read_wait,
@@ -742,7 +742,7 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 		goto fail;
 	}
 	if (prtd->reset_event) {
-		pr_err("%s: In SSR return ENETRESET after wait\n", __func__);
+		pr_debug("%s: In SSR return ENETRESET after wait\n", __func__);
 		return -ENETRESET;
 	}
 	if (!atomic_read(&prtd->in_count)) {
@@ -763,7 +763,7 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 		offset = in_frame_info[idx][1];
 		pr_debug("Offset value = %d\n", offset);
 		if (copy_to_user(buf, bufptr+offset, xfer)) {
-			pr_err("Failed to copy buf to user\n");
+			pr_debug("Failed to copy buf to user\n");
 			ret = -EFAULT;
 			goto fail;
 		}
@@ -778,12 +778,12 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 		atomic_dec(&prtd->in_count);
 		ret = q6asm_read(prtd->audio_client);
 		if (ret < 0) {
-			pr_err("q6asm read failed\n");
+			pr_debug("q6asm read failed\n");
 			ret = -EFAULT;
 			goto fail;
 		}
 	} else
-		pr_err("No valid buffer\n");
+		pr_debug("No valid buffer\n");
 
 	pr_debug("Returning from capture_copy... %d\n", ret);
 fail:
@@ -939,7 +939,7 @@ static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
 			(params_buffer_bytes(params) / params_periods(params)),
 			 params_periods(params));
 	if (ret < 0) {
-		pr_err("Audio Start: Buffer Allocation failed rc = %d\n",
+		pr_debug("Audio Start: Buffer Allocation failed rc = %d\n",
 							ret);
 		return -ENOMEM;
 	}
@@ -982,7 +982,7 @@ static int msm_pcm_set_volume(struct msm_audio *prtd, uint32_t volume)
 				prtd->channel_mode, volume);
 		rc = q6asm_set_volume(prtd->audio_client, volume);
 		if (rc < 0) {
-			pr_err("%s: Send Volume command failed rc=%d\n",
+			pr_debug("%s: Send Volume command failed rc=%d\n",
 					__func__, rc);
 		}
 	}
@@ -999,11 +999,11 @@ static int msm_pcm_volume_ctl_get(struct snd_kcontrol *kcontrol,
 
 	pr_debug("%s\n", __func__);
 	if (!substream) {
-		pr_err("%s substream not found\n", __func__);
+		pr_debug("%s substream not found\n", __func__);
 		return -ENODEV;
 	}
 	if (!substream->runtime) {
-		pr_err("%s substream runtime not found\n", __func__);
+		pr_debug("%s substream runtime not found\n", __func__);
 		return 0;
 	}
 	prtd = substream->runtime->private_data;
@@ -1024,11 +1024,11 @@ static int msm_pcm_volume_ctl_put(struct snd_kcontrol *kcontrol,
 
 	pr_debug("%s: volume : 0x%x\n", __func__, volume);
 	if (!substream) {
-		pr_err("%s substream not found\n", __func__);
+		pr_debug("%s substream not found\n", __func__);
 		return -ENODEV;
 	}
 	if (!substream->runtime) {
-		pr_err("%s substream runtime not found\n", __func__);
+		pr_debug("%s substream runtime not found\n", __func__);
 		return 0;
 	}
 	prtd = substream->runtime->private_data;
@@ -1051,7 +1051,7 @@ static int msm_pcm_add_volume_control(struct snd_soc_pcm_runtime *rtd)
 			NULL, 1, rtd->dai_link->be_id,
 			&volume_info);
 	if (ret < 0) {
-		pr_err("%s volume control failed ret %d\n", __func__, ret);
+		pr_debug("%s volume control failed ret %d\n", __func__, ret);
 		return ret;
 	}
 	kctl = volume_info->kctl;
@@ -1149,7 +1149,7 @@ static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
 	kctl->get = msm_pcm_chmap_ctl_get;
 	ret = msm_pcm_add_volume_control(rtd);
 	if (ret)
-		pr_err("%s: Could not add pcm Volume Control %d\n",
+		pr_debug("%s: Could not add pcm Volume Control %d\n",
 			__func__, ret);
 	return ret;
 }
