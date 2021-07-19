@@ -4,10 +4,11 @@ export PATH=$PATH:/data/synapse/actions
 
 gencfg() {
 
-    if [ ! -f "/data/synapse/config.json" ]
+    if [ -f "/data/synapse/config.json" ]
     then
-        . /data/synapse/config.json.generate > /data/synapse/config.json
-    fi
+		rm "/data/synapse/config.json"
+	fi
+    . /data/synapse/config.json.generate > /data/synapse/config.json
 
 }
 
@@ -24,9 +25,5 @@ then
     echo '/data/synapse/actions'
 elif [ "$1" = "reset" ]
 then
-    if [ -f "/data/synapse/config.json" ]
-    then
-        rm /data/synapse/config.json
-    fi
     gencfg
 fi
