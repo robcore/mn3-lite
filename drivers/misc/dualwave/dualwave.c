@@ -139,7 +139,7 @@ static struct kobj_type g_tKobjType = {
 void expTimer_service(unsigned long arg){
 	g_iEnableUpdateSoundTime = DUALWAVE_INACTIVE;
 	config_attribute.tConfig = 0;
-	printk(KERN_INFO "khhan %s %d\n", __func__, __LINE__);
+	pr_debug("khhan %s %d\n", __func__, __LINE__);
 }
 
 /**
@@ -156,7 +156,7 @@ ssize_t dualwave_attr_show(struct kobject *ptKobj, struct attribute *ptAttr,char
 {
 	struct dualwave_attribute *ptDualWaveAttr;
 
-	//printk(KERN_INFO "khhan %s %d\n", __func__, __LINE__);
+	//pr_debug("khhan %s %d\n", __func__, __LINE__);
 
 	// get dualwave structure pointer
 	ptDualWaveAttr = container_of(ptAttr,struct dualwave_attribute , attr);
@@ -184,7 +184,7 @@ ssize_t dualwave_attr_store(struct kobject *ptKobj,struct attribute *ptAttr,cons
 {
 	struct dualwave_attribute *ptDualWaveAttr;
 
-	//printk(KERN_INFO "khhan %s %d\n", __func__, __LINE__);
+	//pr_debug("khhan %s %d\n", __func__, __LINE__);
 
 	// get dualwave structure pointer
 	ptDualWaveAttr = container_of(ptAttr,struct dualwave_attribute , attr);
@@ -207,7 +207,7 @@ ssize_t dualwave_attr_store(struct kobject *ptKobj,struct attribute *ptAttr,cons
   */
 static void dualwave_release(struct kobject *kobj)
 {
-	printk(KERN_INFO "khhan %s %d\n", __func__, __LINE__);
+	pr_debug("khhan %s %d\n", __func__, __LINE__);
 
 	kfree(kobj);
 }
@@ -224,7 +224,7 @@ static void dualwave_release(struct kobject *kobj)
   */
 static ssize_t show_my_attr_info (struct dualwave_attribute *attr, char *buf)
 {
-	printk(KERN_INFO "khhan %s %d\n", __func__, __LINE__);
+	pr_debug("khhan %s %d\n", __func__, __LINE__);
 
 	return sprintf(buf, PRINT_TIMEFORMAT_STRING "\n", attr->tTime.tv_sec,attr->tTime.tv_nsec);
 }
@@ -243,7 +243,7 @@ static ssize_t show_my_attr_info (struct dualwave_attribute *attr, char *buf)
   */
 static ssize_t store_info_to_attr(struct dualwave_attribute *attr, const char *buf, size_t count)
 {
-	printk(KERN_INFO "khhan %s %d\n", __func__, __LINE__);
+	pr_debug("khhan %s %d\n", __func__, __LINE__);
 
 	sscanf(buf, PRINT_TIMEFORMAT_STRING, &attr->tTime.tv_sec, &attr->tTime.tv_nsec);
 	send_uevent_wh_timeinfo(attr->attr.name, &attr->tTime);
@@ -253,14 +253,14 @@ static ssize_t store_info_to_attr(struct dualwave_attribute *attr, const char *b
 
 static ssize_t show_my_config (struct dualwave_attribute *attr, char *buf)
 {
-	//printk(KERN_INFO "khhan %s %d\n", __func__, __LINE__);
+	//pr_debug("khhan %s %d\n", __func__, __LINE__);
 
 	//return sprintf(buf, PRINT_CONFIG_FORMAT "\n",g_iEnableUpdateSoundTime );
 	return sprintf(buf, PRINT_CONFIG_FORMAT_STRING "\n", attr->tConfig);
 }
 static ssize_t store_my_config(struct dualwave_attribute *attr, const char *buf, size_t count)
 {
-	//printk(KERN_INFO "khhan %s %d\n", __func__, __LINE__);
+	//pr_debug("khhan %s %d\n", __func__, __LINE__);
 
 	sscanf(buf, PRINT_CONFIG_FORMAT, &attr->tConfig);
 
@@ -270,25 +270,25 @@ static ssize_t store_my_config(struct dualwave_attribute *attr, const char *buf,
 			g_iEnableUpdateSoundTime = DUALWAVE_INACTIVE;
 			//if(timer_pending(&expTimer)) {
 			del_timer(&expTimer);
-				printk(KERN_INFO "khhan del timer %s %d\n", __func__, __LINE__);
+				pr_debug("khhan del timer %s %d\n", __func__, __LINE__);
 		break;
 		case 1:
 			attr->tConfig = 1;
 			g_iEnableUpdateSoundTime = DUALWAVE_PLAYBACK;
 			mod_timer(&expTimer, jiffies + TIMER_VALUE);
-			printk(KERN_INFO "khhan modifying timer %s %d\n", __func__, __LINE__);
+			pr_debug("khhan modifying timer %s %d\n", __func__, __LINE__);
 		break;
 		case 2:
 			attr->tConfig = 2;
 			g_iEnableUpdateSoundTime = DUALWAVE_CAPTURE;
 			mod_timer(&expTimer, jiffies + TIMER_VALUE);
-			printk(KERN_INFO "khhan modifying timer %s %d\n", __func__, __LINE__);
+			pr_debug("khhan modifying timer %s %d\n", __func__, __LINE__);
 		break;
 		default:
 			attr->tConfig = 0;
 			g_iEnableUpdateSoundTime = DUALWAVE_INACTIVE;
 			count = -1;
-			printk(KERN_INFO "khhan ***** wrong status %s %d ***** \n", __func__, __LINE__);
+			pr_debug("khhan ***** wrong status %s %d ***** \n", __func__, __LINE__);
 	}
 
 	return count;
@@ -345,12 +345,12 @@ int send_uevent_wh_timeinfo(const char *szName, struct timespec *ptTime)
 	}
 #endif
 
-	printk(KERN_INFO "khhan %s %d\n", __func__, __LINE__);
+	pr_debug("khhan %s %d\n", __func__, __LINE__);
 
 	prBuf = kzalloc(MAX_DUALWAVE_MESSAGE_SIZE, GFP_KERNEL);
 	if(prBuf == NULL)
 	{
-		printk(KERN_INFO "khhan ***** failed to alloc memory for dualwave message buffer %s %d ***** \n", __func__, __LINE__);
+		pr_debug("khhan ***** failed to alloc memory for dualwave message buffer %s %d ***** \n", __func__, __LINE__);
 		return -1;
 	}
 	pEnvp[0] = prBuf;
@@ -361,7 +361,7 @@ int send_uevent_wh_timeinfo(const char *szName, struct timespec *ptTime)
 	retval =  kobject_uevent_env(g_ptDualWaveKobj, KOBJ_CHANGE, pEnvp) ;
 	if(retval)
 	{
-		printk(KERN_INFO "khhan ***** failed to call kobject_event (%d) %s %d ***** \n", retval, __func__, __LINE__);
+		pr_debug("khhan ***** failed to call kobject_event (%d) %s %d ***** \n", retval, __func__, __LINE__);
 		kfree(prBuf);
 		return -1;
 	}
@@ -377,11 +377,10 @@ int send_uevent_wh_ble_info(char *prEnvInfoLists[3])
 {
         int retval;
 
-		printk(KERN_INFO "khhan %s %d\n", __func__, __LINE__);
+		pr_debug("khhan %s %d\n", __func__, __LINE__);
 //        prBuf = kzalloc(MAX_DUALWAVE_MESSAGE_SIZE, GFP_KERNEL);
 //        if(prBuf == NULL)
 //        {
-//                printk("[DualWave] failed to alloc memory for dualwave message buffer\n\n");
 //                return -1;
 //        }
 //        pEnvp[0] = prBuf;
@@ -392,7 +391,7 @@ int send_uevent_wh_ble_info(char *prEnvInfoLists[3])
         retval =  kobject_uevent_env(g_ptDualWaveKobj, KOBJ_CHANGE, prEnvInfoLists) ;
         if(retval)
         {
-			printk(KERN_INFO "khhan ***** failed to call kobject_event (%d) %s %d ***** \n", retval, __func__, __LINE__);
+			pr_debug("khhan ***** failed to call kobject_event (%d) %s %d ***** \n", retval, __func__, __LINE__);
             return -1;
         }
 
@@ -410,12 +409,12 @@ int send_uevent_snd_avail(int state)
 		char *prBuf;
         int retval;
 
-		printk(KERN_INFO "khhan %s %d\n", __func__, __LINE__);
+		pr_debug("khhan %s %d\n", __func__, __LINE__);
 
 		prBuf = kzalloc(MAX_DUALWAVE_MESSAGE_SIZE, GFP_KERNEL);
 		if(prBuf == NULL)
 		{
-			printk(KERN_INFO "khhan ***** failed to alloc memory for dualwave message buffer %s %d ***** \n", __func__, __LINE__);
+			pr_debug("khhan ***** failed to alloc memory for dualwave message buffer %s %d ***** \n", __func__, __LINE__);
 			return -1;
 		}
 		pEnvp[0] = prBuf;
@@ -426,7 +425,7 @@ int send_uevent_snd_avail(int state)
         retval =  kobject_uevent_env(g_ptDualWaveKobj, KOBJ_CHANGE, pEnvp) ;
         if(retval)
         {
-			printk(KERN_INFO "khhan ***** failed to call kobject_event (%d) %s %d ***** \n", retval, __func__, __LINE__);
+			pr_debug("khhan ***** failed to call kobject_event (%d) %s %d ***** \n", retval, __func__, __LINE__);
 			kfree(prBuf);
             return -1;
         }
@@ -451,7 +450,7 @@ static int __init dualwave_init(void)
 	int retval;
 	static const char *SOUND_DIR="sound";
 
-	printk(KERN_INFO "khhan Entering %s %d\n", __func__, __LINE__);
+	pr_debug("khhan Entering %s %d\n", __func__, __LINE__);
 
 	init_timer(&expTimer);
 	expTimer.expires = jiffies + TIMER_VALUE;
@@ -466,7 +465,7 @@ static int __init dualwave_init(void)
 
 	if (!g_ptDualWaveKset)
 	{
-		printk(KERN_INFO "khhan ***** failed to execute kobject_create_and_add %s %d ***** \n", __func__, __LINE__);
+		pr_debug("khhan ***** failed to execute kobject_create_and_add %s %d ***** \n", __func__, __LINE__);
 		err_status = -1;
 		return -EEXIST;
 	}
@@ -475,7 +474,7 @@ static int __init dualwave_init(void)
 
 	if(g_ptDualWaveKobj == NULL)
 	{
-		printk(KERN_INFO "khhan ***** failed to kobj kzalloc %s %d ***** \n", __func__, __LINE__);
+		pr_debug("khhan ***** failed to kobj kzalloc %s %d ***** \n", __func__, __LINE__);
 		err_status = -2;
 		return -ENOMEM;
 	}
@@ -489,7 +488,7 @@ static int __init dualwave_init(void)
 	if (retval)
 	{
 		kset_put(g_ptDualWaveKset);
-		printk(KERN_INFO "khhan ***** failed to kobj init and add %s %d ***** \n", __func__, __LINE__);
+		pr_debug("khhan ***** failed to kobj init and add %s %d ***** \n", __func__, __LINE__);
 		err_status = -3;
 		kfree(g_ptDualWaveKobj);
 		return -1;
@@ -499,7 +498,7 @@ static int __init dualwave_init(void)
 	retval = kobject_uevent(g_ptDualWaveKobj, KOBJ_ADD);
 	if(retval)
 	{
-		printk(KERN_INFO "khhan ***** failed to call kobject_event (%d) %s %d ***** \n", retval, __func__, __LINE__);
+		pr_debug("khhan ***** failed to call kobject_event (%d) %s %d ***** \n", retval, __func__, __LINE__);
 		err_status = -4;
 		kfree(g_ptDualWaveKobj);
 		return -1;
@@ -519,7 +518,7 @@ static int __init dualwave_init(void)
   * @warning
   */
 static void __exit dualwave_exit(void){
-    printk(KERN_INFO "khhan exiting module %s %d \n", __func__, __LINE__);
+    pr_debug("khhan exiting module %s %d \n", __func__, __LINE__);
 
 	del_timer_sync(&expTimer);
 	kobject_put(g_ptDualWaveKobj);
