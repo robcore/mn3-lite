@@ -30,6 +30,8 @@ on early-init
 
 # create mountpoints
     mkdir /mnt 0775 root system
+    chown root system /mnt
+    chmod 0775 /mnt
 
 on init
 	sysclktz 0
@@ -46,6 +48,8 @@ on init
 # Vibetonz
     export VIBE_PIPE_PATH /dev/pipes
     mkdir /dev/pipes 0771 vibe vibe
+    chown 0771 /dev/pipes
+    chmod vibe vibe /dev/pipes
     restorecon /dev/pipes
 
 # Backward compatibility
@@ -272,7 +276,7 @@ on post-fs-data
     # sec_efs_file
     mkdir /efs/sec_efs 0775 radio system
 
-    # We chown/chmod /data again so because mount is run as root + defaults
+    # We chown/chmod /data again because mount is run as root + defaults
     chown system system /data
     chmod 0771 /data
     # We restorecon /data in case the userdata partition has been reset.
@@ -353,29 +357,63 @@ on post-fs-data
     # For security reasons, /data/local/tmp should always be empty.
     # Do not place files or directories in /data/local/tmp
     mkdir /data/local/tmp 0771 shell shell
+    chown shell shell /data/local/tmp
+    chmod 0771 /data/local/tmp
+
     mkdir /data/data 0771 system system
+    chown /data/data system system
+    chmod /data/data 0771
+
     mkdir /data/app-private 0771 system system
+    chown system system /data/app-private
+    chmod 0771 /data/app-private
+
     mkdir /data/app-asec 0700 root root
+    chown root root /data/app-asec
+    chmod 0700 /data/app-asec
+
     mkdir /data/app-lib 0771 system system
+    chown system system /data/app-lib
+    chmod 0771 /data/app-lib
+
     mkdir /data/app 0771 system system
+    chown system system /data/app
+    chmod 0771 /data/app
+
     mkdir /data/property 0700 root root
+    chown root root /data/property
+    chmod 0700 /data/property
+
     mkdir /data/system 0775 system system
+    chown system system /data/system
+    chmod 0775 /data/system
+
     mkdir /data/system/container 0700 system system
+    chown system system /data/system/container
+    chmod 0700 /data/system/container
+
     mkdir /data/tombstones 0771 system system
+    chown system system /data/tombstones
+    chmod 0771 /data/tombstones
 
     # SA, System SW, SAMSUNG create log directory
     mkdir /data/log 0775 system log
     chown system log /data/log
+    chmod 0775 /data/log
+    restorecon /data/log
+
     mkdir /data/anr 0775 system system
     chown system system /data/anr
-    chmod 0775 /data/log
     chmod 0775 /data/anr
-    restorecon /data/log
     restorecon /data/anr
 
     # create dalvik-cache, so as to enforce our permissions
     mkdir /data/dalvik-cache 0771 root root
+    chmod 0771 /data/dalvik-cache
+    chown root root /data/dalvik-cache
     mkdir /data/dalvik-cache/profiles 0711 system system
+    chmod 0711 /data/dalvik-cache/profiles
+    chown system system /data/dalvik-cache/profiles
 
     # create resource-cache and double-check the perms
     mkdir /data/resource-cache 0771 system system
@@ -384,17 +422,23 @@ on post-fs-data
 
     # create the lost+found directories, so as to enforce our permissions
     mkdir /data/lost+found 0770 root root
+    chown 0770 /data/lost+found
+    chmod root root /data/lost+found
     restorecon /data/lost+found
 
     # create directory for DRM plug-ins - give drm the read/write access to
     # the following directory.
     mkdir /data/drm 0770 drm drm
+    chown drm drm /data/drm
+    chmod 0770 /data/drm
 
     # create directory for MediaDrm plug-ins - give drm the read/write access to
     # the following directory.
     mkdir /data/mediadrm 0770 mediadrm mediadrm
+    chown mediadrm mediadrm /data/mediadrm
+    chmod 0770 /data/mediadrm
 
-# [ SEC_MM_DRM
+    # SEC_MM_DRM
     # OMA DB directory creation
     mkdir /data/system/databases 0775
     chown system system /data/system/databases
@@ -432,13 +476,16 @@ on post-fs-data
 
 # CS socket
     mkdir /dev/socket/cs_socket 0770 system system
+    chown system system /dev/socket/cs_socket
+    chmod 0770 /dev/socket/cs_socket
 
     # symlink to bugreport storage location
     symlink /data/data/com.android.shell/files/bugreports /data/bugreports
 
     # Separate location for storing security policy files on data
     mkdir /data/security 0700 system system
-
+    chown system system /data/security
+    chmod 0700 /data/security
     # Reload policy from /data/security if present.
     setprop selinux.reload_policy 1
 
@@ -447,12 +494,6 @@ on post-fs-data
     # won't work.
     # Set indication (checked by vold) that we have finished this action
     #setprop vold.post_fs_data_done 1
-
-
-# Separate location for storing security policy files on data
-#start SEC_PRODUCT_FEATURE_COMMON_SUPPORT_SE_FOR_ANDROID
-    mkdir /data/security 0700 system system
-#end SEC_PRODUCT_FEATURE_COMMON_SUPPORT_SE_FOR_ANDROID
 
 # Permissions for svc led
     chown system system /sys/class/sec/led/led_r
@@ -469,19 +510,25 @@ on post-fs-data
     chmod 0660 /dev/ice4_dev
 
 # Downloadable Filter
-    mkdir /data/DownFilters       0775 system system
-    mkdir /data/DownFilters/Lib   0775 system system
+    mkdir /data/DownFilters 0775 system system
+    chown system system /data/DownFilters
+    chmod 0775 /data/DownFilters
+    mkdir /data/DownFilters/Lib 0775 system system
+    chown system system /data/DownFilters/Lib
+    chmod 0775 /data/DownFilters/Lib
     mkdir /data/DownFilters/Lib64 0775 system system
+    chown system system /data/DownFilters/Lib64
+    chmod 0775 /data/DownFilters/Lib64
 
 on boot
-
 # reset_reason
     chown system system /proc/reset_reason
     chmod 0600 /proc/reset_reason
 
 # Mobicore
     mkdir /data/app/mcRegistry 0775 system system
-
+    chown system system /data/app/mcRegistry
+    chmod 0775 /data/app/mcRegistry
 # MUIC
     chown radio system /sys/class/sec/switch/usb_sel
     chown radio system /sys/class/sec/switch/usb_state
@@ -519,11 +566,6 @@ on boot
     #write /proc/sys/vm/dirty_background_ratio  5
 
     # Permissions for System Server and daemons.
-    chown radio system /sys/android_power/state
-    chown radio system /sys/android_power/request_state
-    chown radio system /sys/android_power/acquire_full_wake_lock
-    chown radio system /sys/android_power/acquire_partial_wake_lock
-    chown radio system /sys/android_power/release_wake_lock
     chown system system /sys/power/autosleep
     chown system system /sys/power/state
     chown system system /sys/power/wakeup_count
@@ -734,19 +776,24 @@ on boot
     chmod 0600 /dev/bcm2079x
     chown nfc nfc /dev/bcm2079x
     mkdir /data/bcmnfc 0700 nfc nfc
+    chown nfc nfc /data/bcmnfc
+    chmod 0700 /data/bcmnfc
     mkdir /data/bcmnfc/param 0700 nfc nfc
+    chown nfc nfc/data/bcmnfc/param
+    chmod 0700 /data/bcmnfc/param
 
     # NFC_SLSI
     chmod 0660 /dev/sec-nfc
     chown nfc nfc /dev/sec-nfc
-    mkdir /data/nfc 0700 nfc nfc
-    mkdir /data/nfc/param 0700 nfc nfc
+    #mkdir /data/nfc 0700 nfc nfc
+    #mkdir /data/nfc/param 0700 nfc nfc
 
 # MTP permission
     chmod 0660 /dev/usb_mtp_gadget
     chown system mtp /dev/usb_mtp_gadget
     mkdir /dev/socket/mtp 0770 system mtp
-
+    chown system mtp /dev/socket/mtp
+    chmod 0770 /dev/socket/mtp
 # Accelerometer_sensor
     chown system radio /sys/class/sensors/accelerometer_sensor/raw_data
     chown system radio /sys/class/sensors/accelerometer_sensor/calibration

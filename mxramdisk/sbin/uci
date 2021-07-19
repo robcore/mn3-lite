@@ -17,16 +17,16 @@ then
     cat /data/synapse/config.json
 elif [ "$1" = "configpath" ]
 then
-	gencfg
+    gencfg
     echo '/data/synapse/config.json'
 elif [ "$1" = "actionpath" ]
 then
     echo '/data/synapse/actions'
 elif [ "$1" = "reset" ]
 then
-    if [ ! -f "/data/synapse/config.json" ]
+    if [ -f "/data/synapse/config.json" ]
     then
-	    rm /data/synapse/config.json
-	fi
+        rm /data/synapse/config.json
+    fi
     gencfg
 fi
