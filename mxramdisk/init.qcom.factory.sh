@@ -26,6 +26,10 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+echo "fastmmisrv: init.qcom.factory begin" | tee /dev/kmsg
+# Set this property so surfaceflinger is not started by system_init
+    setprop system_init.startsurfaceflinger 0
+
 # Actions on fast factory test mode
     chown -h bluetooth.bluetooth /sys/module/bluetooth_power/parameters/power
     chown -h bluetooth.bluetooth /sys/class/rfkill/rfkill0/type
@@ -225,9 +229,6 @@
 # session is not exercised through RemoteDisplay in the android framework
     setprop persist.sys.wfd.virtual 0
 
-# Set this property so surfaceflinger is not started by system_init
-    setprop system_init.startsurfaceflinger 0
-
 # Start the following services needed for fftm
     start config_bluetooth
     start media
@@ -241,3 +242,6 @@
     start qcom-usb-sh
     start qcomsysd
     start ptt_ffbm
+
+echo "fastmmisrv: init.qcom.factory ends" | tee /dev/kmsg
+
