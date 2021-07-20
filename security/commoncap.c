@@ -107,7 +107,7 @@ int cap_capable(const struct cred *cred, struct user_namespace *targ_ns,
 		targ_ns = targ_ns->creator->user_ns;
 	}
 
-    return -EPERM;
+	/* We never get here */
 }
 
 /**
