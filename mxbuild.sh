@@ -985,11 +985,13 @@ do
 	    	clean_build "standalone"
 	    	break
 	    	;;
+
 		 -nc|--newconfig)
             handle_existing
 			build_new_config
 			break
 			;;
+
 		 -m|--menuconfig)
             handle_existing
 			build_menuconfig
