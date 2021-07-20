@@ -710,6 +710,10 @@ create_zip() {
 	echo "$RDIR/$MX_KERNEL_VERSION.zip"
     stop_build_timer
 
+}
+
+pushtodevice() {
+
 	if [ -s "$RDIR/$MX_KERNEL_VERSION.zip" ]
 	then
 		echo -n "$MX_KERNEL_VERSION.zip" > "$LASTZIPFILE"
@@ -805,40 +809,6 @@ create_zip() {
 #	cd $RDIR
 #}
 
-show_help() {
-
-cat << EOF
-Machinexlite kernel by robcore
-Script written by jcadduono, frequentc & robcore
-
-usage: ./mxbuild.sh [OPTION]
-Common options:
- -a|--all            Do a complete build (starting at the beginning)
- -ar|--allreboot     Do a complete build (starting at the beginning), reboot automatically
- -anr|--allnoreboot  Do a complete build (starting at the beginning), do not reboot
- -d|--debug          Similiar to --all but no img, zip or cleanup. Not for production.
- -r|--rebuildme      Same as --all but defaults to rebuilding previous version
- -b|--bsd            Build single driver (path/to/folder/ | path/to/file.o)
- -c|--clean          Remove everything this build script has done
--nc|--newconfig      Concatecate samsung defconfigs & enter menuconfig
- -m|--menuconfig     Setup an environment for and enter menuconfig
- -k|--kernel         Try the build again starting at compiling the kernel
- -o|--kernel-only    Recompile only the kernel, nothing else
- -t|--tests          Testing playground
-
-Extra command line options are possible, with more to be added in the future:
-Currently, it is just the one.
-Appending "noreboot" as the second option will keep the device from rebooting.
-Or, just use the -anr option that is the same as -a to build all,
-but skips the reboot.
-Conversely, appending "reboot" or using -ar will instruct the script to reboot
-automatically.
-EOF
-
-	exit 1
-
-}
-
 #package_ramdisk_and_zip() {
 #
 #	build_ramdisk && build_boot_img && create_zip
@@ -847,9 +817,16 @@ EOF
 
 package_ramdisk_and_zip() {
 
-	build_ramdisk && build_boot_img_qcdt && create_zip
+	build_ramdisk && build_boot_img_qcdt && create_zip && pushtodevice
 
 }
+
+package_ramdisk_and_zip_nopush() {
+
+	build_ramdisk && build_boot_img_qcdt && create_zip && timerprint
+
+}
+
 
 build_kernel_and_package() {
 
@@ -863,9 +840,27 @@ build_kernel_and_package() {
 
 }
 
+build_kernel_and_package_nopush() {
+
+	build_kernel
+    if [ -f "$NEWZMG" ]
+    then
+        package_ramdisk_and_zip_nopush
+    else
+        warnandfail "Kernel Build failed!"
+    fi
+
+}
+
 build_all() {
 
 	clean_build && build_kernel_config && build_kernel_and_package && clean_build
+
+}
+
+build_all_nopush() {
+
+	clean_build && build_kernel_config && build_kernel_and_package_nopush && clean_build
 
 }
 
@@ -895,6 +890,41 @@ test_funcs && exit 0
 
 }
 
+show_help() {
+
+cat << EOF
+Machinexlite kernel by robcore
+Script written by jcadduono, frequentc & robcore
+
+usage: ./mxbuild.sh [OPTION]
+Common options:
+ -a|--all            Do a complete build (starting at the beginning)
+ -anp|--allnopush    Do a complete build (starting at the beginning), no push to device
+ -ar|--allreboot     Do a complete build (starting at the beginning), reboot automatically
+ -anr|--allnoreboot  Do a complete build (starting at the beginning), do not reboot
+ -d|--debug          Similiar to --all but no img, zip or cleanup. Not for production.
+ -r|--rebuildme      Same as --all but defaults to rebuilding previous version
+ -b|--bsd            Build single driver (path/to/folder/ | path/to/file.o)
+ -c|--clean          Remove everything this build script has done
+-nc|--newconfig      Concatecate samsung defconfigs & enter menuconfig
+ -m|--menuconfig     Setup an environment for and enter menuconfig
+ -k|--kernel         Try the build again starting at compiling the kernel
+ -o|--kernel-only    Recompile only the kernel, nothing else
+ -t|--tests          Testing playground
+
+Extra command line options are possible, with more to be added in the future:
+Currently, it is just the one.
+Appending "noreboot" as the second option will keep the device from rebooting.
+Or, just use the -anr option that is the same as -a to build all,
+but skips the reboot.
+Conversely, appending "reboot" or using -ar will instruct the script to reboot
+automatically.
+EOF
+
+	exit 1
+
+}
+
 if [ $# = 0 ] ; then
 	show_help
 fi
@@ -907,6 +937,13 @@ do
 			checkrecov
 			handle_existing
 			build_all
+			break
+	    	;;
+
+	     -anp|--allnopush)
+			checkrecov
+			handle_existing
+			build_all_nopush
 			break
 	    	;;
 
