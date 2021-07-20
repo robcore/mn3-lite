@@ -948,7 +948,6 @@ do
 	    	;;
 
 	     -anr|--allnoreboot)
-			checkrecov
 			handle_existing
 			build_all
 			break
