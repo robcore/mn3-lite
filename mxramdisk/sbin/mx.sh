@@ -148,23 +148,42 @@ do
     echo 0 > "/sys/block/$MYBLOCK/queue/add_random"
 done
 
-echo 1 > /proc/sys/vm/panic_on_oom
 echo 0 > /sys/devices/platform/kcal_ctrl.0/kcal_enable
 #echo 0 > /sys/devices/virtual/graphics/fb0/csc_cfg
 #chown 0:0 /sys/devices/virtual/graphics/fb0/csc_cfg
 #chmod 400 /sys/devices/virtual/graphics/fb0/csc_cfg
-echo cfq > /sys/block/mmcblk0/queue/scheduler
-echo cfq > /sys/block/mmcblk1/queue/scheduler
-echo 0 > /sys/block/mmcblk0/queue/iosched/slice_idle
-echo 0 > /sys/block/mmcblk1/queue/iosched/slice_idle
+#echo cfq > /sys/block/mmcblk0/queue/scheduler
+#echo cfq > /sys/block/mmcblk1/queue/scheduler
+if [ -f "/sys/block/mmcblk0/queue/iosched/slice_idle" ]
+then
+    echo 0 > /sys/block/mmcblk0/queue/iosched/slice_idle
+fi
+if [ -f "/sys/block/mmcblk1/queue/iosched/slice_idle" ]
+then
+    echo 0 > /sys/block/mmcblk1/queue/iosched/slice_idle
+fi
+
 echo 0 > /proc/sys/net/ipv4/tcp_slow_start_after_idle
 
 #echo 1 > /proc/sys/net/ipv4/tcp_no_metrics_save
 echo 'f' > /sys/class/net/wlan0/queues/tx-0/xps_cpus
-echo 0 > /sys/class/net/wlan0/queues/tx-0/tx_timeout
+#echo 0 > /sys/class/net/wlan0/queues/tx-0/tx_timeout
 echo 'f' > /sys/class/net/wlan0/queues/rx-0/rps_cpus
 echo 7516192768 > /sys/class/net/wlan0/queues/tx-0/byte_queue_limits/limit_max
 echo 0 > /sys/class/net/wlan0/queues/tx-0/byte_queue_limits/hold_time
+
+SYSUIPID="$(pidof com.android.systemui)"
+if [ -z "$(echo $SYSUIPID)" ]
+then
+    echo "[MACHIN3X] SystemUI not running so not killing" | tee /dev/kmsg
+else
+    if kill -9 "$SYSUIPID"
+    then
+        echo "[MACHIN3X] SystemUI Killed Early" | tee /dev/kmsg
+    else
+        echo "[MACHIN3X] Error: SystemUI Not Killed" | tee /dev/kmsg
+    fi
+fi
 
 #echo 0 > /sys/devices/virtual/lcd/panel/temperature
 echo "[MACHIN3X] mx.sh Complete" | tee /dev/kmsg
