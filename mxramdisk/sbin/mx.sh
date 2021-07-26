@@ -172,18 +172,18 @@ echo 'f' > /sys/class/net/wlan0/queues/rx-0/rps_cpus
 echo 7516192768 > /sys/class/net/wlan0/queues/tx-0/byte_queue_limits/limit_max
 echo 0 > /sys/class/net/wlan0/queues/tx-0/byte_queue_limits/hold_time
 
-SYSUIPID="$(pidof com.android.systemui)"
-if [ -z "$(echo $SYSUIPID)" ]
-then
-    echo "[MACHIN3X] SystemUI not running so not killing" | tee /dev/kmsg
-else
-    if kill -9 "$SYSUIPID"
-    then
-        echo "[MACHIN3X] SystemUI Killed Early" | tee /dev/kmsg
-    else
-        echo "[MACHIN3X] Error: SystemUI Not Killed" | tee /dev/kmsg
-    fi
-fi
+#SYSUIPID="$(pidof com.android.systemui)"
+#if [ -z "$(echo $SYSUIPID)" ]
+#then
+#    echo "[MACHIN3X] SystemUI not running so not killing" | tee /dev/kmsg
+#else
+#    if kill -9 "$SYSUIPID"
+#    then
+#        echo "[MACHIN3X] SystemUI Killed Early" | tee /dev/kmsg
+#    else
+#        echo "[MACHIN3X] Error: SystemUI Not Killed" | tee /dev/kmsg
+#    fi
+#fi
 
 #echo 0 > /sys/devices/virtual/lcd/panel/temperature
 echo "[MACHIN3X] mx.sh Complete" | tee /dev/kmsg
