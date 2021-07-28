@@ -103,9 +103,9 @@ chown -R 0:2000 "/system/etc/init.d"
 #chmod 755 "/sys"
 
 # Set correct r/w permissions for LMK parameters
-chmod 666 "/sys/module/lowmemorykiller/parameters/cost"
-chmod 666 "/sys/module/lowmemorykiller/parameters/adj"
-chmod 666 "/sys/module/lowmemorykiller/parameters/minfree"
+chmod 644 "/sys/module/lowmemorykiller/parameters/cost"
+chmod 644 "/sys/module/lowmemorykiller/parameters/adj"
+chmod 644 "/sys/module/lowmemorykiller/parameters/minfree"
 
 chmod 755 /data/synapse
 chown -R 0:0 /data/synapse
