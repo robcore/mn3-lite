@@ -68,8 +68,8 @@ static uint32_t oom_count = 0;
 #define OOM_DEPTH 4
 #endif
 
-static uint32_t lowmem_debug_level = 1;
-static int lowmem_adj[6] = {
+static uint32_t lowmem_debug_level = 0;
+static short lowmem_adj[6] = {
 	0,
 	1,
 	6,
@@ -91,39 +91,6 @@ static unsigned long lowmem_deathpending_timeout;
 		if (lowmem_debug_level >= (level))	\
 			pr_info(x);			\
 	} while (0)
-#if defined(CONFIG_SEC_DEBUG_LMK_MEMINFO)
-static void dump_tasks_info(void)
-{
-	struct task_struct *p;
-	struct task_struct *task;
-
-	pr_info("[ pid ]   uid	tgid total_vm	   rss swap cpu oom_adj oom_score_adj name\n");
-	for_each_process(p) {
-		/* check unkillable tasks */
-		if (is_global_init(p))
-			continue;
-		if (p->flags & PF_KTHREAD)
-			continue;
-
-		task = find_lock_task_mm(p);
-		if (!task) {
-			/*
-			* This is a kthread or all of p's threads have already
-			* detached their mm's.	There's no need to report
-			* them; they can't be oom killed anyway.
-			*/
-			continue;
-		}
-
-		pr_info("[%5d] %5d %5d %8lu %8lu %8lu %3u	 %3d	     %5d %s\n",
-		task->pid, task_uid(task), task->tgid,
-		task->mm->total_vm, get_mm_rss(task->mm), get_mm_counter(task->mm, MM_SWAPENTS),
-		task_cpu(task), task->signal->oom_adj,
-		task->signal->oom_score_adj, task->comm);
-		task_unlock(task);
-	}
-}
-#endif
 
 static int test_task_flag(struct task_struct *p, int flag)
 {
@@ -160,10 +127,10 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	int rem = 0;
 	int tasksize;
 	int i;
-	int min_score_adj = OOM_SCORE_ADJ_MAX + 1;
+	short min_score_adj = OOM_SCORE_ADJ_MAX + 1;
 	int minfree = 0;
 	int selected_tasksize = 0;
-	int selected_oom_score_adj;
+	short selected_oom_score_adj;
 #ifdef CONFIG_SAMP_HOTNESS
 	int selected_hotness_adj = 0;
 #endif
@@ -192,9 +159,12 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	other_free = global_page_state(NR_FREE_PAGES);
 
 	nr_cma_free = global_page_state(NR_FREE_CMA_PAGES);
-#ifdef CONFIG_ZSWAP
-	if (!current_is_kswapd() || sc->priority <= 6)
-#endif
+//#ifdef CONFIG_ZSWAP
+//	if (!current_is_kswapd() || sc->priority <= 6)
+//#else
+//	if (!current_is_kswapd())
+//#endif
+	if (!current_is_kswapd() || sc->priority < 7)
 		other_free -= nr_cma_free;
 
 #if defined(CONFIG_CMA_PAGE_COUNTING)
@@ -252,7 +222,7 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	rcu_read_lock();
 	for_each_process(tsk) {
 		struct task_struct *p;
-		int oom_score_adj;
+		short oom_score_adj;
 #ifdef CONFIG_SAMP_HOTNESS
 		int hotness_adj = 0;
 #endif
@@ -323,8 +293,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 #ifdef CONFIG_SAMP_HOTNESS
 		selected_hotness_adj = hotness_adj;
 #endif
-		lowmem_print(2, "select %d (%s), adj %d, size %d, to kill\n",
-			     p->pid, p->comm, oom_score_adj, tasksize);
 	}
 	if (selected) {
 		lowmem_deathpending_timeout = jiffies + HZ;
@@ -379,9 +347,7 @@ static int android_oom_handler(struct notifier_block *nb,
 	int selected_tasksize = 0;
 	int selected_oom_score_adj;
 #endif
-#ifdef CONFIG_SEC_DEBUG_LMK_MEMINFO
 	static DEFINE_RATELIMIT_STATE(oom_rs, DEFAULT_RATELIMIT_INTERVAL/5, 1);
-#endif
 
 	unsigned long *freed = data;
 #if defined(CONFIG_CMA_PAGE_COUNTING)
@@ -403,19 +369,6 @@ static int android_oom_handler(struct notifier_block *nb,
 					nr_cma_active_file;
 #endif
 
-	/* show status */
-	pr_warning("%s invoked Android-oom-killer: "
-		"oom_adj=%d, oom_score_adj=%d\n",
-		current->comm, current->signal->oom_adj,
-		current->signal->oom_score_adj);
-#ifdef CONFIG_SEC_DEBUG_LMK_MEMINFO
-	if (__ratelimit(&oom_rs)) {
-		dump_stack();
-		show_mem(SHOW_MEM_FILTER_NODES);
-		dump_tasks_info();
-	}
-#endif
-
 	min_score_adj = 0;
 #ifdef MULTIPLE_OOM_KILLER
 	for (i = 0; i < OOM_DEPTH; i++)
@@ -427,9 +380,9 @@ static int android_oom_handler(struct notifier_block *nb,
 	read_lock(&tasklist_lock);
 	for_each_process(tsk) {
 		struct task_struct *p;
-		int oom_score_adj;
+		short oom_score_adj;
 #ifdef MULTIPLE_OOM_KILLER
-		int is_exist_oom_task = 0;
+		bool is_exist_oom_task = false;
 #endif
 
 		if (tsk->flags & PF_KTHREAD)
@@ -455,7 +408,7 @@ static int android_oom_handler(struct notifier_block *nb,
 		if (all_selected_oom < OOM_DEPTH) {
 			for (i = 0; i < OOM_DEPTH; i++) {
 				if (!selected[i]) {
-					is_exist_oom_task = 1;
+					is_exist_oom_task = true;
 					max_selected_oom_idx = i;
 					break;
 				}
@@ -463,7 +416,7 @@ static int android_oom_handler(struct notifier_block *nb,
 		} else if (selected_oom_score_adj[max_selected_oom_idx] < oom_score_adj ||
 			(selected_oom_score_adj[max_selected_oom_idx] == oom_score_adj &&
 			selected_tasksize[max_selected_oom_idx] < tasksize)) {
-			is_exist_oom_task = 1;
+			is_exist_oom_task = true;
 		}
 
 		if (is_exist_oom_task) {
@@ -577,7 +530,7 @@ static void __exit lowmem_exit(void)
 }
 
 #ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER_AUTODETECT_OOM_ADJ_VALUES
-static int lowmem_oom_adj_to_oom_score_adj(int oom_adj)
+static short lowmem_oom_adj_to_oom_score_adj(short oom_adj)
 {
 	if (oom_adj == OOM_ADJUST_MAX)
 		return OOM_SCORE_ADJ_MAX;
@@ -588,8 +541,8 @@ static int lowmem_oom_adj_to_oom_score_adj(int oom_adj)
 static void lowmem_autodetect_oom_adj_values(void)
 {
 	int i;
-	int oom_adj;
-	int oom_score_adj;
+	short oom_adj;
+	short oom_score_adj;
 	int array_size = ARRAY_SIZE(lowmem_adj);
 
 	if (lowmem_adj_size < array_size)
@@ -647,7 +600,7 @@ static struct kernel_param_ops lowmem_adj_array_ops = {
 static const struct kparam_array __param_arr_adj = {
 	.max = ARRAY_SIZE(lowmem_adj),
 	.num = &lowmem_adj_size,
-	.ops = &param_ops_int,
+	.ops = &param_ops_short,
 	.elemsize = sizeof(lowmem_adj[0]),
 	.elem = lowmem_adj,
 };
@@ -658,21 +611,20 @@ module_param_named(cost, lowmem_shrinker.seeks, int, S_IRUGO | S_IWUSR);
 __module_param_call(MODULE_PARAM_PREFIX, adj,
 		    &lowmem_adj_array_ops,
 		    .arr = &__param_arr_adj,
-		    S_IRUGO | S_IWUSR, -1);
-__MODULE_PARM_TYPE(adj, "array of int");
+		    644, -1);
+__MODULE_PARM_TYPE(adj, "array of short");
 #else
-module_param_array_named(adj, lowmem_adj, int, &lowmem_adj_size,
-			 S_IRUGO | S_IWUSR);
+module_param_array_named(adj, lowmem_adj, short, &lowmem_adj_size, 644);
 #endif
-module_param_array_named(minfree, lowmem_minfree, uint, &lowmem_minfree_size,
-			 S_IRUGO | S_IWUSR);
-module_param_named(debug_level, lowmem_debug_level, uint, S_IRUGO | S_IWUSR);
+module_param_array_named(minfree, lowmem_minfree, uint, &lowmem_minfree_size, 644);
+module_param_named(debug_level, lowmem_debug_level, uint, 644);
 #ifdef LMK_COUNT_READ
-module_param_named(lmkcount, lmk_count, uint, S_IRUGO);
+module_param_named(lmkcount, lmk_count, uint, 444);
 #endif
 #ifdef OOM_COUNT_READ
-module_param_named(oomcount, oom_count, uint, S_IRUGO);
+module_param_named(oomcount, oom_count, uint, 444);
 #endif
+
 module_init(lowmem_init);
 module_exit(lowmem_exit);
 
