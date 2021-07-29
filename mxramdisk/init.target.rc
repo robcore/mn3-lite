@@ -33,7 +33,6 @@ on early-init
     symlink /data/tombstones /tombstones
 
     setenforce 0
-    setprop ro.boot.selinux 0
 
 on init
     # Set the property to indicate type of virtual display to 0
@@ -56,7 +55,7 @@ on fs
     check_fs /dev/block/platform/msm_sdcc.1/by-name/persist ext4
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/persist /persist nosuid nodev noatime noauto_da_alloc,discard,journal_async_commit,errors=panic
     mkdir /persist/data 0700 system system
-	restorecon /persist
+#	restorecon /persist
 
     wait /dev/block/platform/msm_sdcc.1/by-name/efs
     check_fs /dev/block/platform/msm_sdcc.1/by-name/efs ext4
@@ -80,7 +79,7 @@ on fs_selinux
 
     wait /dev/block/platform/msm_sdcc.1/by-name/modem
     mount vfat /dev/block/platform/msm_sdcc.1/by-name/modem /firmware-modem ro shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337
-    write /sys/kernel/boot_adsp/boot 1
+#    write /sys/kernel/boot_adsp/boot 1
 
 on post-fs-data
     mkdir /data/tombstones 0771 system system
