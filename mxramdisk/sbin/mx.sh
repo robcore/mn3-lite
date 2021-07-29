@@ -32,7 +32,6 @@ chmod 755 /sys
 chmod 644 /sys/fs/selinux/enforce
 echo 0 > /sys/fs/selinux/enforce
 echo "[MACHIN3X] mx.sh Started" | tee /dev/kmsg
-#rm '/data/dalvik-cache/arm/dev@tmp@install@common@magisk.apk@classes.dex' &> /dev/null
 
 if [ -f "/root/sqlite3" ]
 then
@@ -107,10 +106,21 @@ chmod 644 "/sys/module/lowmemorykiller/parameters/cost"
 chmod 644 "/sys/module/lowmemorykiller/parameters/adj"
 chmod 644 "/sys/module/lowmemorykiller/parameters/minfree"
 
+if [ ! -d "/data/synapse" ]
+then
+	mkdir "/data/synapse"
+fi
+
+if [ ! -d "/data/synapse/actions" ]
+then
+	mkdir "/data/synapse/actions"
+fi
+
 chmod 755 /data/synapse
 chown -R 0:0 /data/synapse
 chmod 644 /data/synapse/config.json*
 chmod -R 755 /data/synapse/actions
+
 if [ ! -d "/data/synapse/stemp" ]
 then
     mkdir "/data/synapse/stemp"
@@ -146,6 +156,10 @@ chmod 644 "/sys/block/mmcblk1/queue/scheduler"
 for MYBLOCK in mmcblk0 mmcblk0rpmb mmcblk1
 do
     echo 0 > "/sys/block/$MYBLOCK/queue/add_random"
+if [ -f "/sys/block/$MYBLOCK/queue/iosched/slice_idle" ]
+then
+    echo 0 > "/sys/block/$MYBLOCK/queue/iosched/slice_idle"
+fi
 done
 
 echo 0 > /sys/devices/platform/kcal_ctrl.0/kcal_enable
@@ -154,23 +168,15 @@ echo 0 > /sys/devices/platform/kcal_ctrl.0/kcal_enable
 #chmod 400 /sys/devices/virtual/graphics/fb0/csc_cfg
 #echo cfq > /sys/block/mmcblk0/queue/scheduler
 #echo cfq > /sys/block/mmcblk1/queue/scheduler
-if [ -f "/sys/block/mmcblk0/queue/iosched/slice_idle" ]
-then
-    echo 0 > /sys/block/mmcblk0/queue/iosched/slice_idle
-fi
-if [ -f "/sys/block/mmcblk1/queue/iosched/slice_idle" ]
-then
-    echo 0 > /sys/block/mmcblk1/queue/iosched/slice_idle
-fi
 
-echo 0 > /proc/sys/net/ipv4/tcp_slow_start_after_idle
+#echo 0 > /proc/sys/net/ipv4/tcp_slow_start_after_idle
 
 #echo 1 > /proc/sys/net/ipv4/tcp_no_metrics_save
-echo 'f' > /sys/class/net/wlan0/queues/tx-0/xps_cpus
+#echo 'f' > /sys/class/net/wlan0/queues/tx-0/xps_cpus
 #echo 0 > /sys/class/net/wlan0/queues/tx-0/tx_timeout
-echo 'f' > /sys/class/net/wlan0/queues/rx-0/rps_cpus
-echo 7516192768 > /sys/class/net/wlan0/queues/tx-0/byte_queue_limits/limit_max
-echo 0 > /sys/class/net/wlan0/queues/tx-0/byte_queue_limits/hold_time
+#echo 'f' > /sys/class/net/wlan0/queues/rx-0/rps_cpus
+#echo 7516192768 > /sys/class/net/wlan0/queues/tx-0/byte_queue_limits/limit_max
+#echo 0 > /sys/class/net/wlan0/queues/tx-0/byte_queue_limits/hold_time
 
 #SYSUIPID="$(pidof com.android.systemui)"
 #if [ -z "$(echo $SYSUIPID)" ]
@@ -191,3 +197,4 @@ echo "[MACHIN3X] Running Init.d" | tee /dev/kmsg
 
 /system/xbin/busybox run-parts /system/etc/init.d &
 exit 0
+

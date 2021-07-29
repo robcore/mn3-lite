@@ -26,10 +26,6 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-echo "fastmmisrv: init.qcom.factory begin" | tee /dev/kmsg
-# Set this property so surfaceflinger is not started by system_init
-    setprop system_init.startsurfaceflinger 0
-
 # Actions on fast factory test mode
     chown -h bluetooth.bluetooth /sys/module/bluetooth_power/parameters/power
     chown -h bluetooth.bluetooth /sys/class/rfkill/rfkill0/type
@@ -147,6 +143,11 @@ echo "fastmmisrv: init.qcom.factory begin" | tee /dev/kmsg
     echo 5 > /proc/sys/vm/dirty_background_ratio
 
     # Permissions for System Server and daemons.
+    chown -h radio.system /sys/android_power/state
+    chown -h radio.system /sys/android_power/request_state
+    chown -h radio.system /sys/android_power/acquire_full_wake_lock
+    chown -h radio.system /sys/android_power/acquire_partial_wake_lock
+    chown -h radio.system /sys/android_power/release_wake_lock
     chown -h system.system /sys/power/autosleep
     chown -h system.system /sys/power/state
     chown -h system.system /sys/power/wakeup_count
@@ -156,27 +157,27 @@ echo "fastmmisrv: init.qcom.factory begin" | tee /dev/kmsg
     /system/bin/chmod -h 0660 /sys/power/wake_lock
     /system/bin/chmod -h 0660 /sys/power/wake_unlock
 
-    chown -h root.root /sys/devices/system/cpu/cpufreq/interactive/timer_rate
-    /system/bin/chmod -h 0664 /sys/devices/system/cpu/cpufreq/interactive/timer_rate
-    chown -h root.root /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
-    /system/bin/chmod -h 0664 /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
-    chown -h root.root /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
-    /system/bin/chmod -h 0664 /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
-    chown -h root.root /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
-    /system/bin/chmod -h 0664 /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
-    chown -h root.root /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
-    /system/bin/chmod -h 0664 /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
-    chown -h root.root /sys/devices/system/cpu/cpufreq/interactive/boost
-    /system/bin/chmod -h 0664 /sys/devices/system/cpu/cpufreq/interactive/boost
-    chown -h root.root /sys/devices/system/cpu/cpufreq/interactive/boostpulse
-    chown -h root.root /sys/devices/system/cpu/cpufreq/interactive/input_boost
-    /system/bin/chmod -h 0664 /sys/devices/system/cpu/cpufreq/interactive/input_boost
-    chown -h root.root /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
-    /system/bin/chmod -h 0664 /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
+    chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+    chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
+    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
+    chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
+    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
+    chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
+    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
+    chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
+    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
+    chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/boost
+    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/boost
+    chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/boostpulse
+    chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/input_boost
+    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/input_boost
+    chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
+    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
 
     # Assume SMP uses shared cpufreq policy for all CPUs
-    chown -h root.root /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-    /system/bin/chmod -h 0644 /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+    chown -h system.system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 
     chown -h system.system /sys/class/timed_output/vibrator/enable
     chown -h system.system /sys/class/leds/keyboard-backlight/brightness
@@ -228,6 +229,9 @@ echo "fastmmisrv: init.qcom.factory begin" | tee /dev/kmsg
 # 0 indicates that virtual display is not a Wifi display and that the
 # session is not exercised through RemoteDisplay in the android framework
     setprop persist.sys.wfd.virtual 0
+
+# Set this property so surfaceflinger is not started by system_init
+    setprop system_init.startsurfaceflinger 0
 
 # Start the following services needed for fftm
     start config_bluetooth

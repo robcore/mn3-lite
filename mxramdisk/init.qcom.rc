@@ -917,10 +917,8 @@ service fastmmi /system/bin/mmi
 
 service fastmmisrv /system/bin/sh /init.qcom.factory.sh
     user root
-    group root
     disabled
     oneshot
-  	seclabel u:r:init:s0
 
 on ffbm
     start fastmmisrv
