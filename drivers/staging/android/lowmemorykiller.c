@@ -611,13 +611,13 @@ module_param_named(cost, lowmem_shrinker.seeks, int, S_IRUGO | S_IWUSR);
 __module_param_call(MODULE_PARAM_PREFIX, adj,
 		    &lowmem_adj_array_ops,
 		    .arr = &__param_arr_adj,
-		    0644, -1);
+		    0664, -1);
 __MODULE_PARM_TYPE(adj, "array of short");
 #else
-module_param_array_named(adj, lowmem_adj, short, &lowmem_adj_size, 0644);
+module_param_array_named(adj, lowmem_adj, short, &lowmem_adj_size, 0664);
 #endif
-module_param_array_named(minfree, lowmem_minfree, uint, &lowmem_minfree_size, 0644);
-module_param_named(debug_level, lowmem_debug_level, uint, 0644);
+module_param_array_named(minfree, lowmem_minfree, uint, &lowmem_minfree_size, 0664);
+module_param_named(debug_level, lowmem_debug_level, uint, 0664);
 #ifdef LMK_COUNT_READ
 module_param_named(lmkcount, lmk_count, uint, 0444);
 #endif
