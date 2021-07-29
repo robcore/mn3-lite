@@ -122,8 +122,8 @@ on property:persist.sys.storage_preload=1
     mount ext4 /dev/block/mmcblk0p25 /preload nosuid nodev ro barrier=1
     setprop storage.preload.complete 1
 
-on property:persist.sys.storage_preload=0
-    start umount_service
+#on property:persist.sys.storage_preload=0
+#    start umount_service
 
 # TODO: replace it with device's DEXPREOPT_BOOT_JARS
 # bootchecker

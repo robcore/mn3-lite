@@ -33,31 +33,31 @@
     chown -h bluetooth.bluetooth /proc/bluetooth/sleep/proto
     chown -h system.system /sys/module/sco/parameters/disable_esco
     chown -h bluetooth.bluetooth /sys/module/hci_smd/parameters/hcismd_set
-    /system/bin/chmod -h 0660 /sys/module/bluetooth_power/parameters/power
-    /system/bin/chmod -h 0660 /sys/module/hci_smd/parameters/hcismd_set
-    /system/bin/chmod -h 0660 /sys/class/rfkill/rfkill0/state
-    /system/bin/chmod -h 0660 /proc/bluetooth/sleep/proto
+    chmod -h 0660 /sys/module/bluetooth_power/parameters/power
+    chmod -h 0660 /sys/module/hci_smd/parameters/hcismd_set
+    chmod -h 0660 /sys/class/rfkill/rfkill0/state
+    chmod -h 0660 /proc/bluetooth/sleep/proto
     chown -h bluetooth.bluetooth /dev/ttyHS0
-    /system/bin/chmod -h 0660 /dev/ttyHS0
+    chmod -h 0660 /dev/ttyHS0
     chown -h bluetooth.bluetooth /sys/devices/platform/msm_serial_hs.0/clock
-    /system/bin/chmod -h 0660 /sys/devices/platform/msm_serial_hs.0/clock
+    chmod -h 0660 /sys/devices/platform/msm_serial_hs.0/clock
 
-    /system/bin/chmod -h 0660 /dev/ttyHS2
+    chmod -h 0660 /dev/ttyHS2
     chown -h bluetooth.bluetooth /dev/ttyHS2
 
     #Create QMUX deamon socket area
     mkdir -p /dev/socket/qmux_radio
     chown -h radio.radio /dev/socket/qmux_radio
-    /system/bin/chmod -h 2770 /dev/socket/qmux_radio
+    chmod -h 2770 /dev/socket/qmux_radio
     mkdir -p /dev/socket/qmux_audio
     chown -h media.audio /dev/socket/qmux_audio
-    /system/bin/chmod -h 2770 /dev/socket/qmux_audio
+    chmod -h 2770 /dev/socket/qmux_audio
     mkdir -p /dev/socket/qmux_bluetooth
     chown -h bluetooth.bluetooth /dev/socket/qmux_bluetooth
-    /system/bin/chmod -h 2770 /dev/socket/qmux_bluetooth
+    chmod -h 2770 /dev/socket/qmux_bluetooth
     mkdir -p /dev/socket/qmux_gps
     chown -h gps.gps /dev/socket/qmux_gps
-    /system/bin/chmod -h 2770 /dev/socket/qmux_gps
+    chmod -h 2770 /dev/socket/qmux_gps
 
     # Allow QMUX daemon to assign port open wait time
     chown -h radio.radio /sys/devices/virtual/hsicctl/hsicctl0/modem_wait
@@ -67,21 +67,21 @@
     setprop ro.telephony.call_ring.multiple false
 
     #Set SUID bit for usbhub
-    /system/bin/chmod -h 4755 /system/bin/usbhub
-    /system/bin/chmod -h 755 /system/bin/usbhub_init
+    chmod -h 4755 /system/bin/usbhub
+    chmod -h 755 /system/bin/usbhub_init
 
     #Remove SUID bit for iproute2 ip tool
-    /system/bin/chmod -h 0755 /system/bin/ip
+    chmod -h 0755 /system/bin/ip
 
-    /system/bin/chmod -h 0444 /sys/devices/platform/msm_hsusb/gadget/usb_state
+    chmod -h 0444 /sys/devices/platform/msm_hsusb/gadget/usb_state
 
     # setup permissions for fb1 related nodes
     chown -h system.graphics /sys/class/graphics/fb1/hpd
     chown -h system.system /sys/class/graphics/fb1/hdcp/tp
-    /system/bin/chmod -h 0664 /sys/devices/virtual/graphics/fb1/hpd
-    /system/bin/chmod -h 0664 /sys/devices/virtual/graphics/fb1/hdcp/tp
-    /system/bin/chmod -h 0664 /sys/devices/virtual/graphics/fb1/video_mode
-    /system/bin/chmod -h 0664 /sys/devices/virtual/graphics/fb1/format_3d
+    chmod -h 0664 /sys/devices/virtual/graphics/fb1/hpd
+    chmod -h 0664 /sys/devices/virtual/graphics/fb1/hdcp/tp
+    chmod -h 0664 /sys/devices/virtual/graphics/fb1/video_mode
+    chmod -h 0664 /sys/devices/virtual/graphics/fb1/format_3d
 
     # Change owner and group for media server and surface flinger
     chown -h system.system /sys/devices/virtual/graphics/fb1/format_3d
@@ -134,9 +134,9 @@
     echo 1 > /proc/sys/vm/overcommit_memory
     echo 4 > /proc/sys/vm/min_free_order_shift
     chown -h root.system /sys/module/lowmemorykiller/parameters/adj
-    /system/bin/chmod -h 0664 /sys/module/lowmemorykiller/parameters/adj
+    chmod -h 0664 /sys/module/lowmemorykiller/parameters/adj
     chown -h root.system /sys/module/lowmemorykiller/parameters/minfree
-    /system/bin/chmod -h 0664 /sys/module/lowmemorykiller/parameters/minfree
+    chmod -h 0664 /sys/module/lowmemorykiller/parameters/minfree
 
     # Tweak background writeout
     echo 200 > /proc/sys/vm/dirty_expire_centisecs
@@ -153,31 +153,31 @@
     chown -h system.system /sys/power/wakeup_count
     chown -h radio.system /sys/power/wake_lock
     chown -h radio.system /sys/power/wake_unlock
-    /system/bin/chmod -h 0660 /sys/power/state
-    /system/bin/chmod -h 0660 /sys/power/wake_lock
-    /system/bin/chmod -h 0660 /sys/power/wake_unlock
+    chmod -h 0660 /sys/power/state
+    chmod -h 0660 /sys/power/wake_lock
+    chmod -h 0660 /sys/power/wake_unlock
 
     chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/timer_rate
-    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+    chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/timer_rate
     chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
-    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
+    chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
     chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
-    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
+    chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
     chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
-    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
+    chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
     chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
-    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
+    chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
     chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/boost
-    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/boost
+    chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/boost
     chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/boostpulse
     chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/input_boost
-    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/input_boost
+    chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/input_boost
     chown -h system.system /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
-    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
+    chmod -h 0660 /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
 
     # Assume SMP uses shared cpufreq policy for all CPUs
     chown -h system.system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-    /system/bin/chmod -h 0660 /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+    chmod -h 0660 /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 
     chown -h system.system /sys/class/timed_output/vibrator/enable
     chown -h system.system /sys/class/leds/keyboard-backlight/brightness
@@ -231,7 +231,7 @@
     setprop persist.sys.wfd.virtual 0
 
 # Set this property so surfaceflinger is not started by system_init
-    setprop system_init.startsurfaceflinger 0
+#    setprop system_init.startsurfaceflinger 0
 
 # Start the following services needed for fftm
     start config_bluetooth
@@ -246,6 +246,3 @@
     start qcom-usb-sh
     start qcomsysd
     start ptt_ffbm
-
-echo "fastmmisrv: init.qcom.factory ends" | tee /dev/kmsg
-

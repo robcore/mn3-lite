@@ -4,8 +4,6 @@
 persist.cne.feature=0
 persist.security.ams.enforcing=0
 ro.secure=0
-ro.build.selinux.enforce=0
-ro.build.selinux=0
 ro.adb.secure=0
 ro.allow.mock.location=1
 ro.debuggable=0

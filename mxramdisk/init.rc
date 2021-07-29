@@ -13,15 +13,15 @@ import /init.carrier.rc
 import /init.container.rc
 
 on early-init
-    # Set the security context for the init process.
-    # This should occur before anything else (e.g. ueventd) is started.
-    setcon u:r:init:s0
-
     # Set init and its forked children's oom_adj.
     write /proc/1/oom_score_adj -1000
 
     # Apply strict SELinux checking of PROT_EXEC on mmap/mprotect calls.
-    write /sys/fs/selinux/checkreqprot 1
+    write /sys/fs/selinux/checkreqprot 0
+
+    # Set the security context for the init process.
+    # This should occur before anything else (e.g. ueventd) is started.
+    setcon u:r:init:s0
 
     # Set the security context of /adb_keys if present.
     restorecon /adb_keys
@@ -46,11 +46,11 @@ on init
     chmod 0660 /proc/avc_msg
 
 # Vibetonz
-    export VIBE_PIPE_PATH /dev/pipes
     mkdir /dev/pipes 0771 vibe vibe
     chown 0771 /dev/pipes
     chmod vibe vibe /dev/pipes
     restorecon /dev/pipes
+    export VIBE_PIPE_PATH /dev/pipes
 
 # Backward compatibility
     symlink /system/etc /etc
@@ -185,7 +185,7 @@ on init
     mount pstore pstore /sys/fs/pstore
     chown system log /sys/fs/pstore/console-ramoops
     chmod 0440 /sys/fs/pstore/console-ramoops
-# To sync between sdcard installd
+# To sync between sdcard and installd
     setprop installd.sdcard_manipulate_done 0
 
 # Healthd can trigger a full boot from charger mode by signaling this
@@ -239,8 +239,8 @@ on post-fs
     # We chown/chmod /cache again so because mount is run as root + defaults
     chown system cache /cache
     chmod 0770 /cache
-    # We restorecon /cache in case the cache partition has been reset.
-    restorecon_recursive /cache
+#    # We restorecon /cache in case the cache partition has been reset.
+#    restorecon_recursive /cache
 
     # This may have been created by the recovery system with odd permissions
 	mkdir /cache/recovery 0770
@@ -281,8 +281,9 @@ on post-fs-data
     chmod 0771 /data
     # We restorecon /data in case the userdata partition has been reset.
     restorecon /data
-    restorecon_recursive /data/system/container
-    restorecon_recursive /data/media
+    restorecon_msc
+#    restorecon_recursive /data/system/container
+#    restorecon_recursive /data/media
 
     # Avoid predictable entropy pool. Carry over entropy from previous boot.
     copy /data/system/entropy.dat /dev/urandom
@@ -464,10 +465,10 @@ on post-fs-data
 
     restorecon -R /efs
     restorecon -R /carrier
-    restorecon_recursive /data/misc/keystore
-    restorecon_recursive /data/property
-    restorecon_recursive /data/security
-# ]
+#    restorecon_recursive /data/misc/keystore
+#    restorecon_recursive /data/property
+#    restorecon_recursive /data/security
+#
 
 # DRK permission
     mkdir /efs/prov 0770 radio system
@@ -557,9 +558,9 @@ on boot
     write /proc/sys/vm/overcommit_memory 1
     write /proc/sys/vm/min_free_order_shift 4
     chown root system /sys/module/lowmemorykiller/parameters/adj
-    chmod 0644 /sys/module/lowmemorykiller/parameters/adj
+    chmod 0664 /sys/module/lowmemorykiller/parameters/adj
     chown root system /sys/module/lowmemorykiller/parameters/minfree
-    chmod 0644 /sys/module/lowmemorykiller/parameters/minfree
+    chmod 0664 /sys/module/lowmemorykiller/parameters/minfree
 
     # Tweak background writeout
     #write /proc/sys/vm/dirty_expire_centisecs 200
@@ -785,8 +786,10 @@ on boot
     # NFC_SLSI
     chmod 0660 /dev/sec-nfc
     chown nfc nfc /dev/sec-nfc
-    #mkdir /data/nfc 0700 nfc nfc
-    #mkdir /data/nfc/param 0700 nfc nfc
+    mkdir /data/nfc 0700 nfc nfc
+	chmod 0700 /data/nfc
+    mkdir /data/nfc/param 0700 nfc nfc
+	chown nfc nfc /data/nfc/param
 
 # MTP permission
     chmod 0660 /dev/usb_mtp_gadget
@@ -969,7 +972,8 @@ on boot
 
 #    write /sys/block/mmcblk0/queue/scheduler noop
     copy /system/etc/battery_charging_temp.data /sys/class/power_supply/battery/batt_temp_table
-
+ # Set this property so surfaceflinger is not started by system_init
+    setprop system_init.startsurfaceflinger 0
     class_start core
 
 on nonencrypted
@@ -1085,7 +1089,7 @@ service healthd /sbin/healthd
     class core
     critical
     seclabel u:r:healthd:s0
-	group root system
+#	group root system
 
 service lpm /system/bin/lpm
     class charger
@@ -1093,8 +1097,8 @@ service lpm /system/bin/lpm
 
 #start SEC_PRODUCT_FEATURE_COMMON_SUPPORT_SE_FOR_ANDROID
 # Reload SE Android Policy for MDM
-#on property:persist.security.mdm.policy=1
-    #setprop selinux.reload_policy 1
+on property:persist.security.mdm.policy=1
+    setprop selinux.reload_policy 1
 #end SEC_PRODUCT_FEATURE_COMMON_SUPPORT_SE_FOR_ANDROID
 
 service console /system/bin/sh
@@ -1191,7 +1195,7 @@ service vold /system/bin/vold
     socket vold stream 0660 root mount
     ioprio be 2
     socket dir_enc_report stream 0660 root mount
-    socket frigate stream 0660 system system
+#    socket frigate stream 0660 system system
 
 service epmd /system/bin/epmd
     class main
@@ -1251,11 +1255,11 @@ service diag_uart_log /system/bin/diag_uart_log
     group radio
 
 service surfaceflinger /system/bin/surfaceflinger
-    class core
+    class main
     user system
     group graphics drmrpc
     onrestart restart zygote
-    onrestart restart loc_launcher
+#    onrestart restart loc_launcher
 
 service SIDESYNC_service /system/bin/ss_conn_daemon
     class main
@@ -1461,16 +1465,16 @@ on property:sys.qseecomd.enable=true
   start insthk
 
 # ccm
-  service ccm /system/bin/tlc_server
-  user system
-  group system
-  disabled
+#  service ccm /system/bin/tlc_server
+#  user system
+#  group system
+#  disabled
 
 # tui
-  service tui /system/bin/tlc_server TUI
-  user system
-  group system
-  disabled
+#  service tui /system/bin/tlc_server TUI
+#  user system
+#  group system
+#  disabled
 
 on property:persist.security.tlc.ccm=1  
   setprop persist.security.tlc.ccm 0
@@ -1479,12 +1483,12 @@ on property:persist.security.tlc.tui=1
   setprop persist.security.tlc.tui 0
 
 on property:sys.boot_completed=1
-    write /sys/block/mmcblk0/queue/scheduler row
+    write /sys/block/mmcblk0/queue/scheduler cfq
 
 # Call Post-init script
 service mxinit /system/bin/sh /sbin/mx.sh
     class late_start
 	user root
-    group root shell
+    group shell
 	seclabel u:r:init:s0
     oneshot
