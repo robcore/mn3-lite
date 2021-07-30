@@ -40,6 +40,9 @@ on init
 
 	ffu
 
+ # Set this property so surfaceflinger is not started by system_init
+    setprop system_init.startsurfaceflinger 0
+
 	# SEC_SELINUX
 	# for audit message
     chown system system /proc/avc_msg
@@ -275,6 +278,8 @@ on post-fs-data
 
     # sec_efs_file
     mkdir /efs/sec_efs 0775 radio system
+	chown radio system /efs/sec_efs
+	chmod 0775 /efs/sec_efs
 
     # We chown/chmod /data again because mount is run as root + defaults
     chown system system /data
@@ -337,10 +342,10 @@ on post-fs-data
     mkdir /data/misc/radio/hatp 0755 radio system
 
    # h2k permission
-  chmod 0644 /efs/redata.bin
-  chown radio radio /efs/h2k.dat
-  chmod 0644 /efs/h2k.dat
-  chown system system /efs/drm/h2k
+    chmod 0644 /efs/redata.bin
+    chown radio radio /efs/h2k.dat
+    chmod 0644 /efs/h2k.dat
+    chown system system /efs/drm/h2k
 
 
     # icd
@@ -487,7 +492,7 @@ on post-fs-data
     chown system system /data/security
     chmod 0700 /data/security
     # Reload policy from /data/security if present.
-#    setprop selinux.reload_policy 1
+    #setprop selinux.reload_policy 1
 
     # If there is no fs-post-data action in the init.<device>.rc file, you
     # must uncomment this line, otherwise encrypted filesystems
@@ -971,8 +976,7 @@ on boot
 
 #    write /sys/block/mmcblk0/queue/scheduler noop
     copy /system/etc/battery_charging_temp.data /sys/class/power_supply/battery/batt_temp_table
- # Set this property so surfaceflinger is not started by system_init
-    setprop system_init.startsurfaceflinger 0
+
     class_start core
 
 on nonencrypted
@@ -1254,11 +1258,10 @@ service diag_uart_log /system/bin/diag_uart_log
     group radio
 
 service surfaceflinger /system/bin/surfaceflinger
-    class core
+    class main
     user system
     group graphics drmrpc
     onrestart restart zygote
-#    onrestart restart loc_launcher
 
 service SIDESYNC_service /system/bin/ss_conn_daemon
     class main
