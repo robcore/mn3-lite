@@ -394,7 +394,7 @@ checkrecov() {
       			adb reboot recovery
        		fi
         fi
-    else if [ "$(echo $(adb get-state))" = "recovery" ]
+    elif [ "$(echo $(adb get-state))" = "recovery" ]
     then
         echo "Device is already in Recovery"
     else
