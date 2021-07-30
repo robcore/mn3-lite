@@ -28,7 +28,7 @@
 # Removed Generalized BULLSHIT and kept our device specific props
 
 #export PATH=${PATH}:/sbin:/system/bin:/system/xbin
-chmod 755 /sys
+#chmod 755 /sys
 chmod 644 /sys/fs/selinux/enforce
 echo 0 > /sys/fs/selinux/enforce
 echo "[MACHIN3X] mx.sh Started" | tee /dev/kmsg
@@ -102,9 +102,9 @@ chown -R 0:2000 "/system/etc/init.d"
 #chmod 755 "/sys"
 
 # Set correct r/w permissions for LMK parameters
-chmod 644 "/sys/module/lowmemorykiller/parameters/cost"
-chmod 644 "/sys/module/lowmemorykiller/parameters/adj"
-chmod 644 "/sys/module/lowmemorykiller/parameters/minfree"
+chmod 664 "/sys/module/lowmemorykiller/parameters/cost"
+chmod 664 "/sys/module/lowmemorykiller/parameters/adj"
+chmod 664 "/sys/module/lowmemorykiller/parameters/minfree"
 
 if [ ! -d "/data/synapse" ]
 then

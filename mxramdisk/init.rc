@@ -198,8 +198,8 @@ on property:sys.boot_from_charger_mode=1
 on load_all_props_action
     load_all_props
 
-on load_persist_props_action
-	load_persist_props
+#on load_persist_props_action
+#	load_persist_props
 
 # Indicate to fw loaders that the relevant mounts are up.
 on firmware_mounts_complete
@@ -219,7 +219,7 @@ on late-init
 	# Now we can mount /data. File encryption requires keymaster to decrypt
 	# /data, which in turn can only be loaded when system properties are present
 
-	trigger load_persist_props_action
+#	trigger load_persist_props_action
 
     # Remove a file to wake up anything waiting for firmware.
     trigger firmware_mounts_complete
@@ -228,7 +228,7 @@ on late-init
     trigger boot
 
 on post-fs
-	mkdir /data/misc/vpnclientd 0770 system system
+#	mkdir /data/misc/vpnclientd 0770 system system
     # once everything is setup, no need to modify /
     mount rootfs rootfs / ro remount
     # mount shared so changes propagate into child namespaces
@@ -468,7 +468,6 @@ on post-fs-data
 #    restorecon_recursive /data/misc/keystore
 #    restorecon_recursive /data/property
 #    restorecon_recursive /data/security
-#
 
 # DRK permission
     mkdir /efs/prov 0770 radio system
@@ -488,7 +487,7 @@ on post-fs-data
     chown system system /data/security
     chmod 0700 /data/security
     # Reload policy from /data/security if present.
-    setprop selinux.reload_policy 1
+#    setprop selinux.reload_policy 1
 
     # If there is no fs-post-data action in the init.<device>.rc file, you
     # must uncomment this line, otherwise encrypted filesystems

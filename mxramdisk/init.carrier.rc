@@ -50,6 +50,12 @@ on boot
     chmod 0600 /dev/btlock
     chown bluetooth bluetooth /dev/btlock
 
+# AT Distributor for factory test
+service at_distributor /system/bin/at_distributor
+    class late_start
+    user root
+    group radio misc log
+
 # SSWAP
     write /proc/sys/vm/swappiness 120
 
@@ -91,15 +97,15 @@ on fs
      chmod 0750 /persdata/absolute
 
 # bluetooth dhcp config
-service dhcpcd_bt-pan /system/bin/dhcpcd -ABKL
- class main
- disabled
- oneshot
+#service dhcpcd_bt-pan /system/bin/dhcpcd -ABKL
+# class main
+# disabled
+# oneshot
 
-service iprenew_bt-pan /system/bin/dhcpcd -n
- class late_start
- disabled
- oneshot
+#service iprenew_bt-pan /system/bin/dhcpcd -n
+# class late_start
+# disabled
+# oneshot
 
 # service for TZPR provisioning version check app
 service scranton_RD /system/bin/scranton_RD
@@ -148,9 +154,4 @@ service ipsec-daemon /system/bin/IPSecService
     user root
     group system
 
-# AT Distributor for factory test
-service at_distributor /system/bin/at_distributor
-    class late_start
-    user root
-    group radio misc log
 
