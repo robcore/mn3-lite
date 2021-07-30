@@ -375,6 +375,7 @@ test_funcs() {
 
 checkrecov() {
     echo "Ensuring System is ready for operations"
+    adb start-server &> /dev/null
     if [ "$(echo $(adb get-state))" = "device" ]
     then
         echo "System is Ready"
@@ -720,15 +721,11 @@ pushtodevice() {
 	then
 		echo -n "$MX_KERNEL_VERSION.zip" > "$LASTZIPFILE"
 		echo "Starting ADB as root."
-		adb root
+		adb root &> /dev/null
 		echo "Checking if Device is Connected..."
-		local SAMSTRING
-		SAMSTRING="$(lsusb | grep '04e8:6860')"
-		RECOVSTRING="$(lsusb | grep '18d1:4ee2')"
-		if [ -n "$SAMSTRING" ]
+		if [ "$(echo $(adb get-state))" = "device" ]
 		then
 			echo "Device is Connected via Usb in System Mode!"
-			echo "$SAMSTRING"
 			echo "Ensuring System is ready for operations"
 			adb "wait-for-device";
 			echo "System is Ready"
@@ -744,10 +741,9 @@ pushtodevice() {
 			else
 				echo "Failed to push $RDIR/$MX_KERNEL_VERSION.zip to $ADBPUSHLOCATION over ADB!"
 			fi
-		elif [ -n "$RECOVSTRING" ]
+		elif [ "$(echo $(adb get-state))" = "recovery" ]
 		then
 			echo "Device is Connected via Usb in Recovery Mode!"
-			echo "$RECOVSTRING"
 			#adb shell input keyevent KEYCODE_WAKEUP
 			#adb shell input touchscreen swipe 930 880 930 380
 			echo "Ensuring Recovery is ready for operations"
