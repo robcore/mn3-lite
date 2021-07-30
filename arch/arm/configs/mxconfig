@@ -1482,7 +1482,7 @@ CONFIG_SYNC=y
 CONFIG_SW_SYNC=y
 # CONFIG_SW_SYNC_USER is not set
 CONFIG_CMA=y
-CONFIG_CMA_PAGE_COUNTING=y
+# CONFIG_CMA_PAGE_COUNTING is not set
 
 #
 # Default contiguous memory area size:
