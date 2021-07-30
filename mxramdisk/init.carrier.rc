@@ -150,8 +150,7 @@ on property:sys.qseecomd.enable=true
 # IPSec for VOLTE
 service ipsec-daemon /system/bin/IPSecService
     class main
-    socket ipsec_socket stream 660 root system
-    user root
-    group system
-
+    socket ipsec_socket stream 660 system system
+    user system
+    group system net_raw inet net_admin
 

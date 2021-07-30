@@ -1254,7 +1254,7 @@ service diag_uart_log /system/bin/diag_uart_log
     group radio
 
 service surfaceflinger /system/bin/surfaceflinger
-    class main
+    class core
     user system
     group graphics drmrpc
     onrestart restart zygote

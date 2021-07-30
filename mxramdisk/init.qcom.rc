@@ -714,6 +714,7 @@ on property:init.svc.macloader=stopped
     chmod 0664 /data/.cid.info
     chown system root /data/.rev
     chmod 0664 /data/.rev
+
 # end of wifi
 
 service sec-sh /system/bin/sh /system/etc/init.sec.boot.sh
@@ -721,8 +722,8 @@ service sec-sh /system/bin/sh /system/etc/init.sec.boot.sh
     user root
     oneshot
 
+#loc_launcher will start as root and set its uid to gps
 service loc_launcher /system/bin/loc_launcher
-    #loc_launcher will start as root and set its uid to gps
     class late_start
     group gps qcom_oncrpc inet net_raw qcom_diag net_admin wifi
 
