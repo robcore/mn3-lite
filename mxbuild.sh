@@ -374,29 +374,31 @@ test_funcs() {
 }
 
 checkrecov() {
-	lsusb > "$RDIR/mxtempusb"
-	if grep -q '04e8:6860' mxtempusb;
-	then
-		echo "Ensuring System is ready for operations"
-		adb "wait-for-device";
-		echo "System is Ready"
+    echo "Ensuring System is ready for operations"
+    if [ "$(echo $(adb get-state))" = "device" ]
+    then
+        echo "System is Ready"
         if [ "$AUTOREBOOT" = "true" ]
         then
-			echo "Automatically Rebooting into TWRP Recovery"
+  			echo "Automatically Rebooting into TWRP Recovery"
             adb shell sync
-			adb reboot recovery
+  			adb reboot recovery
         else
     		echo -n "Reboot into Recovery? [y|n]: "
-    		read -r RECREBOOT
-    		if [ "$RECREBOOT" = "y" ]
-    		then
-    			echo "Rebooting into TWRP Recovery"
+       		read -r RECREBOOT
+       		if [ "$RECREBOOT" = "y" ]
+       		then
+       			echo "Rebooting into TWRP Recovery"
                 adb shell sync
-    			adb reboot recovery
-    		fi
+      			adb reboot recovery
+       		fi
         fi
-	fi
-	rm $RDIR/mxtempusb &> /dev/null
+    else if [ "$(echo $(adb get-state))" = "recovery" ]
+    then
+        echo "Device is already in Recovery"
+    else
+        echo "Device is not connected, nothing to do."
+    fi
 }
 
 handle_existing() {
