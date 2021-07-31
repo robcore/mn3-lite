@@ -40,9 +40,6 @@ on init
 
 	ffu
 
- # Set this property so surfaceflinger is not started by system_init
-    setprop system_init.startsurfaceflinger 0
-
 	# SEC_SELINUX
 	# for audit message
     chown system system /proc/avc_msg
@@ -977,6 +974,9 @@ on boot
 #    write /sys/block/mmcblk0/queue/scheduler noop
     copy /system/etc/battery_charging_temp.data /sys/class/power_supply/battery/batt_temp_table
 
+ # Set this property so surfaceflinger is not started by system_init
+    setprop system_init.startsurfaceflinger 0
+
     class_start core
 
 on nonencrypted
@@ -1258,7 +1258,7 @@ service diag_uart_log /system/bin/diag_uart_log
     group radio
 
 service surfaceflinger /system/bin/surfaceflinger
-    class main
+    class core
     user system
     group graphics drmrpc
     onrestart restart zygote
