@@ -1250,7 +1250,7 @@ service BCS-daemon /system/bin/connfwexe
 service at_distributor /system/bin/at_distributor
     class late_start
     user root
-    group radio log
+    group radio misc log
 
 service diag_uart_log /system/bin/diag_uart_log
     class main

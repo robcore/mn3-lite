@@ -50,12 +50,6 @@ on boot
     chmod 0600 /dev/btlock
     chown bluetooth bluetooth /dev/btlock
 
-# AT Distributor for factory test
-service at_distributor /system/bin/at_distributor
-    class late_start
-    user root
-    group radio misc log
-
 # SSWAP
     write /proc/sys/vm/swappiness 120
 
@@ -130,14 +124,6 @@ on property:sys.qseecomd.enable=true
 
 #on property:persist.sys.storage_preload=0
 #    start umount_service
-
-# TODO: replace it with device's DEXPREOPT_BOOT_JARS
-# bootchecker
-#service bootchecker /system/bin/bootchecker
-#    class late_start
-#    user system
-#    group system log
-#    oneshot
 
 # SSWAP
 #service swapon /sbin/sswap -s
