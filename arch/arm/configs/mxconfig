@@ -1819,7 +1819,7 @@ CONFIG_BCMDHD_NVRAM_PATH="/system/etc/wifi/nvram_net.txt"
 # CONFIG_WIFI_BROADCOM_COB is not set
 CONFIG_WLAN_REGION_CODE=402
 # CONFIG_WIFI_2GHZ_VHT_NO_SUPPORT is not set
-CONFIG_WLAIBSS=y
+# CONFIG_WLAIBSS is not set
 # CONFIG_BRCMFMAC is not set
 # CONFIG_HOSTAP is not set
 # CONFIG_IWM is not set
