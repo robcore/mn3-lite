@@ -1,5 +1,5 @@
 # set up the global environment
-on early-init
+on init
     export PATH /sbin:/system/bin:/system/xbin
     export ANDROID_BOOTLOGO 1
     export ANDROID_ROOT /system
