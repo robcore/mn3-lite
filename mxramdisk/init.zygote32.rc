@@ -6,4 +6,3 @@ service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-sys
     onrestart restart netd
     onrestart restart bootchecker
     onrestart restart loc_launcher
-    disabled
