@@ -42,10 +42,6 @@
 #define SEED_LEN 32
 #endif
 
-#ifdef CONFIG_SDP
-#include "ecryptfs_dek.h"
-#endif
-
 static int
 ecryptfs_decrypt_page_offset(struct ecryptfs_crypt_stat *crypt_stat,
 			     struct page *dst_page, int dst_offset,
@@ -348,8 +344,7 @@ int ecryptfs_derive_iv(char *iv, struct ecryptfs_crypt_stat *crypt_stat,
 #endif
 
 	if (unlikely(ecryptfs_verbosity > 0)) {
-		ecryptfs_printk(KERN_DEBUG, "root iv:\n");
-		ecryptfs_dump_hex(crypt_stat->root_iv, crypt_stat->iv_bytes);
+		pr_debug("ecryptfs dummy\n");
 	}
 	/* TODO: It is probably secure to just cast the least
 	 * significant bits of the root IV into an unsigned long and
@@ -359,8 +354,7 @@ int ecryptfs_derive_iv(char *iv, struct ecryptfs_crypt_stat *crypt_stat,
 	memset((src + crypt_stat->iv_bytes), 0, 16);
 	snprintf((src + crypt_stat->iv_bytes), 16, "%lld", offset);
 	if (unlikely(ecryptfs_verbosity > 0)) {
-		ecryptfs_printk(KERN_DEBUG, "source:\n");
-		ecryptfs_dump_hex(src, (crypt_stat->iv_bytes + 16));
+		pr_debug("ecryptfs dummy\n");
 	}
 #if defined(CONFIG_CRYPTO_FIPS) && !defined(CONFIG_FORCE_DISABLE_FIPS)
 	if (crypt_stat->mount_crypt_stat->flags & ECRYPTFS_ENABLE_CC)
@@ -375,8 +369,7 @@ int ecryptfs_derive_iv(char *iv, struct ecryptfs_crypt_stat *crypt_stat,
 	}
 	memcpy(iv, dst, crypt_stat->iv_bytes);
 	if (unlikely(ecryptfs_verbosity > 0)) {
-		ecryptfs_printk(KERN_DEBUG, "derived iv:\n");
-		ecryptfs_dump_hex(iv, crypt_stat->iv_bytes);
+		pr_debug("ecryptfs dummy\n");
 	}
 out:
 	return rc;
@@ -512,50 +505,16 @@ static int encrypt_scatterlist(struct ecryptfs_crypt_stat *crypt_stat,
 		.flags = CRYPTO_TFM_REQ_MAY_SLEEP
 	};
 	int rc = 0;
-#ifdef CONFIG_SDP
-	int sig_len = 0;
-	unsigned char sig[ECRYPTFS_MAX_KEY_BYTES];
-#endif
 	BUG_ON(!crypt_stat || !crypt_stat->tfm
 	       || !(crypt_stat->flags & ECRYPTFS_STRUCT_INITIALIZED));
-#ifdef CONFIG_SDP
-	if (!(crypt_stat->flags & ECRYPTFS_KEY_SET)) {
-		if(crypt_stat->flags & ECRYPTFS_DEK_SDP_ENABLED && 
-			crypt_stat->flags & ECRYPTFS_DEK_IS_SENSITIVE) {
-			rc = ecryptfs_get_sdp_dek(sig, &sig_len, crypt_stat);
-			if (rc) {
-				ecryptfs_printk(KERN_ERR, "Get encrypt key failed\n");
-				rc = -EINVAL;
-				goto out;
-			}
-		}
-		else{
-			memcpy(sig, crypt_stat->key, crypt_stat->key_size);
-			sig_len = crypt_stat->key_size;
-		}
-#if ECRYPTFS_DEK_DEBUG
-		ecryptfs_printk(KERN_DEBUG, "Key size [%zd]; key:\n", sig_len);
-		ecryptfs_dump_hex(sig, sig_len);
-#endif
-	}
-#endif
 	if (unlikely(ecryptfs_verbosity > 0)) {
-#ifndef CONFIG_SDP
-		ecryptfs_printk(KERN_DEBUG, "Key size [%zd]; key:\n",
-				crypt_stat->key_size);
-		ecryptfs_dump_hex(crypt_stat->key,
-				  crypt_stat->key_size);
-#endif
+		pr_debug("ecryptfs dummy\n");
 	}
 	/* Consider doing this once, when the file is opened */
 	mutex_lock(&crypt_stat->cs_tfm_mutex);
 	if (!(crypt_stat->flags & ECRYPTFS_KEY_SET)) {
-#ifdef CONFIG_SDP
-		rc = crypto_blkcipher_setkey(crypt_stat->tfm, sig, sig_len);
-#else
 		rc = crypto_blkcipher_setkey(crypt_stat->tfm, crypt_stat->key,
 					     crypt_stat->key_size);
-#endif
 		if (rc) {
 			ecryptfs_printk(KERN_ERR, "Error setting key; rc = [%d]\n",
 					rc);
@@ -569,9 +528,6 @@ static int encrypt_scatterlist(struct ecryptfs_crypt_stat *crypt_stat,
 	crypto_blkcipher_encrypt_iv(&desc, dest_sg, src_sg, size);
 	mutex_unlock(&crypt_stat->cs_tfm_mutex);
 out:
-#ifdef CONFIG_SDP
-	memset(sig, 0, ECRYPTFS_MAX_KEY_BYTES);
-#endif
 	return rc;
 }
 
@@ -835,44 +791,14 @@ static int decrypt_scatterlist(struct ecryptfs_crypt_stat *crypt_stat,
 		.flags = CRYPTO_TFM_REQ_MAY_SLEEP
 	};
 	int rc = 0;
-#ifdef CONFIG_SDP
-	int sig_len = 0;
-	unsigned char sig[ECRYPTFS_MAX_KEY_BYTES];
-#endif
 	BUG_ON(!crypt_stat || !crypt_stat->tfm
 	       || !(crypt_stat->flags & ECRYPTFS_STRUCT_INITIALIZED));
-#ifdef CONFIG_SDP
-	if (!(crypt_stat->flags & ECRYPTFS_KEY_SET)) {
-		memset(sig, 0, ECRYPTFS_MAX_KEY_BYTES);
-		if(crypt_stat->flags & ECRYPTFS_DEK_SDP_ENABLED &&
-			crypt_stat->flags & ECRYPTFS_DEK_IS_SENSITIVE) {
-			rc = ecryptfs_get_sdp_dek(sig, &sig_len, crypt_stat);
-			if (rc) {
-				ecryptfs_printk(KERN_ERR, "Get decrypt key failed\n");
-				rc = -EINVAL;
-				goto out;
-			}
-		}
-		else{
-			memcpy(sig, crypt_stat->key, crypt_stat->key_size);
-			sig_len = crypt_stat->key_size;
-		}
-#if ECRYPTFS_DEK_DEBUG
-		ecryptfs_printk(KERN_DEBUG, "Key size [%zd]; key:\n", sig_len);
-		ecryptfs_dump_hex(sig, sig_len);
-#endif
-	}
-#endif
 
 	/* Consider doing this once, when the file is opened */
 	mutex_lock(&crypt_stat->cs_tfm_mutex);
 	if (!(crypt_stat->flags & ECRYPTFS_KEY_SET)) {
-#ifdef CONFIG_SDP
-		rc = crypto_blkcipher_setkey(crypt_stat->tfm, sig, sig_len);
-#else
 		rc = crypto_blkcipher_setkey(crypt_stat->tfm, crypt_stat->key,
 				     crypt_stat->key_size);
-#endif
 		if (rc) {
 			ecryptfs_printk(KERN_ERR, "Error setting key; rc = [%d]\n",
 					rc);
@@ -892,9 +818,6 @@ static int decrypt_scatterlist(struct ecryptfs_crypt_stat *crypt_stat,
 	}
 	rc = size;
 out:
-#ifdef CONFIG_SDP
-	memset(sig, 0, ECRYPTFS_MAX_KEY_BYTES);
-#endif
 	return rc;
 }
 
@@ -1051,15 +974,7 @@ void ecryptfs_set_default_sizes(struct ecryptfs_crypt_stat *crypt_stat)
 int ecryptfs_compute_root_iv(struct ecryptfs_crypt_stat *crypt_stat)
 {
 	int rc = 0;
-#if defined(CONFIG_CRYPTO_FIPS) && !defined(CONFIG_FORCE_DISABLE_FIPS)
-	char dst[SHA256_HASH_SIZE];
-#else
 	char dst[MD5_DIGEST_SIZE];
-#endif
-#ifdef CONFIG_SDP
-	int sig_len = 0;
-	unsigned char sig[ECRYPTFS_MAX_KEY_BYTES];
-#endif
 	BUG_ON(crypt_stat->iv_bytes > MD5_DIGEST_SIZE);
 	BUG_ON(crypt_stat->iv_bytes <= 0);
 	if (!(crypt_stat->flags & ECRYPTFS_KEY_VALID)) {
@@ -1067,31 +982,7 @@ int ecryptfs_compute_root_iv(struct ecryptfs_crypt_stat *crypt_stat)
 		ecryptfs_printk(KERN_WARNING, "Session key not valid; "
 				"cannot generate root IV\n");
 		goto out;
-	}
-#ifdef CONFIG_SDP
-	if(crypt_stat->flags & ECRYPTFS_DEK_SDP_ENABLED &&
-		crypt_stat->flags & ECRYPTFS_DEK_IS_SENSITIVE) {
-		ecryptfs_printk(KERN_ERR, "Using SDP key for root_iv calculation\n");
-		rc = ecryptfs_get_sdp_dek(sig, &sig_len, crypt_stat);
-		if (rc) {
-			ecryptfs_printk(KERN_ERR, "Get decrypt key failed\n");
-			rc = -EINVAL;
-			goto out;
-			}
-#if defined(CONFIG_CRYPTO_FIPS) && !defined(CONFIG_FORCE_DISABLE_FIPS)
-		if (crypt_stat->mount_crypt_stat->flags & ECRYPTFS_ENABLE_CC)
-			rc = ecryptfs_calculate_sha256(dst, crypt_stat, sig, sig_len);
-		else
-#endif
-			rc = ecryptfs_calculate_md5(dst, crypt_stat, sig, sig_len);
-	} else
-#endif
-	{
-#if defined(CONFIG_CRYPTO_FIPS) && !defined(CONFIG_FORCE_DISABLE_FIPS)
-	if (crypt_stat->mount_crypt_stat->flags & ECRYPTFS_ENABLE_CC)
-		rc = ecryptfs_calculate_sha256(dst, crypt_stat, crypt_stat->key, crypt_stat->key_size);
-	else
-#endif
+	} else {
 		rc = ecryptfs_calculate_md5(dst, crypt_stat, crypt_stat->key, crypt_stat->key_size);
 	}
 	if (rc) {
@@ -1105,9 +996,6 @@ out:
 		memset(crypt_stat->root_iv, 0, crypt_stat->iv_bytes);
 		crypt_stat->flags |= ECRYPTFS_SECURITY_WARNING;
 	}
-#ifdef CONFIG_SDP
-	memset(sig, 0, ECRYPTFS_MAX_KEY_BYTES);
-#endif
 	return rc;
 }
 
@@ -1121,9 +1009,7 @@ static void ecryptfs_generate_new_key(struct ecryptfs_crypt_stat *crypt_stat)
 	crypt_stat->flags |= ECRYPTFS_KEY_VALID;
 	ecryptfs_compute_root_iv(crypt_stat);
 	if (unlikely(ecryptfs_verbosity > 0)) {
-		ecryptfs_printk(KERN_DEBUG, "Generated new session key:\n");
-		ecryptfs_dump_hex(crypt_stat->key,
-				  crypt_stat->key_size);
+		pr_debug("ecryptfs dummy\n");
 	}
 }
 
@@ -1153,10 +1039,6 @@ static void ecryptfs_copy_mount_wide_flags_to_inode_flags(
 			crypt_stat->flags |= ECRYPTFS_ENCFN_USE_FEK;
 	}
 
-#ifdef CONFIG_SDP
-    if (mount_crypt_stat->flags & ECRYPTFS_MOUNT_SDP_ENABLED)
-        crypt_stat->flags |= ECRYPTFS_DEK_SDP_ENABLED;
-#endif
 }
 
 static int ecryptfs_copy_mount_wide_sigs_to_inode_sigs(
@@ -1206,9 +1088,6 @@ static void ecryptfs_set_default_crypt_stat_vals(
 	crypt_stat->flags &= ~(ECRYPTFS_KEY_VALID);
 	crypt_stat->file_version = ECRYPTFS_FILE_VERSION;
 	crypt_stat->mount_crypt_stat = mount_crypt_stat;
-#ifdef CONFIG_SDP
-	crypt_stat->userid = mount_crypt_stat->userid;
-#endif
 }
 
 /**
@@ -1301,13 +1180,7 @@ static struct ecryptfs_flag_map_elem ecryptfs_flag_map[] = {
 	{0x00000001, ECRYPTFS_ENABLE_HMAC},
 	{0x00000002, ECRYPTFS_ENCRYPTED},
 	{0x00000004, ECRYPTFS_METADATA_IN_XATTR},
-#ifdef CONFIG_SDP
-	{0x00000008, ECRYPTFS_ENCRYPT_FILENAMES},
-	{0x00100000, ECRYPTFS_DEK_SDP_ENABLED},
-	{0x00200000, ECRYPTFS_DEK_IS_SENSITIVE},
-#else
 	{0x00000008, ECRYPTFS_ENCRYPT_FILENAMES}
-#endif
 };
 
 /**
@@ -1627,18 +1500,6 @@ int ecryptfs_write_metadata(struct dentry *ecryptfs_dentry,
 		rc = -EINVAL;
 		goto out;
 	}
-#ifdef CONFIG_SDP
-#if ECRYPTFS_DEK_DEBUG
-	ecryptfs_printk(KERN_INFO, "name is [%s], flag is %d\n",
-			ecryptfs_dentry->d_name.name, crypt_stat->flags);
-	if (crypt_stat->flags & ECRYPTFS_DEK_IS_SENSITIVE) {
-		ecryptfs_printk(KERN_INFO, "is sensitive\n");
-	}
-	else{
-		ecryptfs_printk(KERN_INFO, "is protected\n");
-	}
-#endif
-#endif
 	virt_len = crypt_stat->metadata_size;
 	order = get_order(virt_len);
 	/* Released in this function */
@@ -1815,9 +1676,7 @@ int ecryptfs_read_xattr_region(char *page_virt, struct inode *ecryptfs_inode)
 				       page_virt, ECRYPTFS_DEFAULT_EXTENT_SIZE);
 	if (size < 0) {
 		if (unlikely(ecryptfs_verbosity > 0))
-			printk(KERN_INFO "Error attempting to read the [%s] "
-			       "xattr from the lower file; return value = "
-			       "[%zd]\n", ECRYPTFS_XATTR_NAME, size);
+    		pr_debug("ecryptfs dummy\n");
 		rc = -EINVAL;
 		goto out;
 	}
@@ -1915,24 +1774,6 @@ int ecryptfs_read_metadata(struct dentry *ecryptfs_dentry)
 			rc = -EINVAL;
 		}
 	}
-
-#ifdef CONFIG_SDP
-#if ECRYPTFS_DEK_DEBUG
-	ecryptfs_printk(KERN_INFO, "name is [%s], flag is %d\n",
-			ecryptfs_dentry->d_name.name, crypt_stat->flags);
-	if (crypt_stat->flags & ECRYPTFS_DEK_IS_SENSITIVE) {
-		ecryptfs_printk(KERN_INFO, "dek_file_type is sensitive, enc type=%d\n",
-				crypt_stat->sdp_dek.type);
-		if (ecryptfs_is_persona_locked(crypt_stat->userid)) {
-			ecryptfs_printk(KERN_INFO, "persona is locked, rc=%d\n", rc);
-		} else {
-			ecryptfs_printk(KERN_INFO, "persona is unlocked, rc=%d\n", rc);
-		}
-	} else {
-		ecryptfs_printk(KERN_INFO, "dek_file_type is protected\n");
-	}
-#endif
-#endif
 
 out:
 	if (page_virt) {
