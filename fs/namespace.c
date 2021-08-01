@@ -1299,9 +1299,8 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
 		return NULL;
 
 	res = q = clone_mnt(mnt, dentry, flag);
-	if (IS_ERR(q))
-		return q;
-
+	if (IS_ERR(q) || !q)
+		goto Enomem;
 	q->mnt_mountpoint = mnt->mnt_mountpoint;
 
 	p = mnt;
@@ -1748,7 +1747,7 @@ static int do_move_mount(struct path *path, char *old_name)
 	struct path old_path, parent_path;
 	struct mount *p;
 	struct mount *old;
-	int err;
+	int err = 0;
 
 	if (!old_name || !*old_name)
 		return -EINVAL;
