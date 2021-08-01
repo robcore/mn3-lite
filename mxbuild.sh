@@ -29,9 +29,9 @@ MXRD="$RDIR/mxrd"
 RAMDISKFOLDER="$RDIR/mxramdisk"
 ZIPFOLDER="$RDIR/mxzip"
 BUILDIR="$RDIR/build"
-LOGDIR="$RDIR/buildlogs"
+LOGDIR="/root/mn3litelogging/buildlogs"
 KDIR="$BUILDIR/arch/arm/boot"
-OLDCFG="$RDIR/oldconfigs"
+OLDCFGDIR="/root/mn3litelogging/oldconfigs"
 
 OLDVERFILE="$RDIR/.oldversion"
 OLDVER="$(cat $OLDVERFILE)"
@@ -99,14 +99,14 @@ else
     CLEANONFAIL="yes"
 fi
 
-if [ ! -d "$RDIR/buildlogs" ]
+if [ ! -d "$LOGDIR" ]
 then
-    mkdir "$RDIR/buildlogs"
+    mkdir "$LOGDIR"
 fi
 
-if [ ! -d "$OLDCFG" ]
+if [ ! -d "$OLDCFGDIR" ]
 then
-    mkdir -p "$OLDCFG"
+    mkdir -p "$OLDCFGDIR"
 fi
 
 stop_build_timer() {
@@ -528,8 +528,8 @@ backupconfig() {
 
     if [ -d "$BUILDIR" ]
     then
-    	echo "Backing up .config to $OLDCFG/config.$QUICKDATE"
-    	cp "$BUILDIR/.config" "$OLDCFG/config.$QUICKDATE" || warnandfail "Config Copy Error!"
+    	echo "Backing up .config to $OLDCFGDIR/config.$QUICKDATE"
+    	cp "$BUILDIR/.config" "$OLDCFGDIR/config.$QUICKDATE" || warnandfail "Config Copy Error!"
     fi
 
 }
