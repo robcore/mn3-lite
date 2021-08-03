@@ -227,11 +227,30 @@ static inline bool freezer_should_skip(struct task_struct *p)
 	__retval;							\
 })
 
+#define wait_io_event_freezable(wq, condition)				\
+({									\
+	int __retval;							\
+	freezer_do_not_count();						\
+	__retval = wait_io_event_interruptible(wq, (condition));	\
+	freezer_count();						\
+	__retval;							\
+})
+
 #define wait_event_freezable_timeout(wq, condition, timeout)		\
 ({									\
 	long __retval = timeout;					\
 	freezer_do_not_count();						\
 	__retval = wait_event_interruptible_timeout(wq,	(condition),	\
+				__retval);				\
+	freezer_count();						\
+	__retval;							\
+})
+
+#define wait_io_event_freezable_timeout(wq, condition, timeout)		\
+({									\
+	long __retval = timeout;					\
+	freezer_do_not_count();						\
+	__retval = wait_io_event_interruptible_timeout(wq, (condition),	\
 				__retval); 				\
 	freezer_count();						\
 	__retval;							\
