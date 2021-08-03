@@ -32,7 +32,7 @@ BUILDIR="$RDIR/build"
 LOGDIR="/root/mn3litelogging/buildlogs"
 KDIR="$BUILDIR/arch/arm/boot"
 OLDCFGDIR="/root/mn3litelogging/oldconfigs"
-
+NOREBOOTOPFILE="$RDIR/.noreboot"
 OLDVERFILE="$RDIR/.oldversion"
 OLDVER="$(cat $OLDVERFILE)"
 LASTZIPFILE="$RDIR/.lastzip"
@@ -74,7 +74,7 @@ export CROSS_COMPILE="$TOOLCHAIN"
 
 if [ "$1" != "-b" ] && [ "$1" != "--bsd" ] && [ "$1" != "-c" ] && [ "$1" != "--clean" ]
 then
-    if [ "$2" = "noreboot" ] || [ "$1" = "-anr" ] || [ "$1" = "--allnoreboot" ]
+    if [ "$2" = "noreboot" ] || [ "$1" = "-anr" ] || [ "$1" = "--allnoreboot" ] || [ -f "$NOREBOOTOPFILE" ]
     then
         NOREBOOT="true"
         echo "Script will not reboot after recovery install!"
