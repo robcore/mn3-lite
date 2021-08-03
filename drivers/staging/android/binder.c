@@ -363,10 +363,7 @@ struct binder_transaction {
 static void
 binder_defer_work(struct binder_proc *proc, enum binder_deferred_state defer);
 
-/*
- * copied from get_unused_fd_flags
- */
-int task_get_unused_fd_flags(struct binder_proc *proc, int flags)
+static int task_get_unused_fd_flags(struct binder_proc *proc, int flags)
 {
 	struct files_struct *files = proc->files;
 	int fd, error;
@@ -503,7 +500,6 @@ out_unlock:
 static void binder_set_nice(long nice)
 {
 	long min_nice;
-
 	if (can_nice(current, nice)) {
 		set_user_nice(current, nice);
 		return;
