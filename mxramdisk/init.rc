@@ -1199,7 +1199,7 @@ service servicemanager /system/bin/servicemanager
 service vold /system/bin/vold
     class core
     socket vold stream 0660 root mount
-    ioprio be 2
+#    ioprio be 2
     socket dir_enc_report stream 0660 root mount
 #    socket frigate stream 0660 system system
 
@@ -1207,7 +1207,7 @@ service epmd /system/bin/epmd
     class main
     socket epm stream 0660 system system
     socket ppm stream 0660 system system
-    ioprio be 2
+#    ioprio be 2
 
 service netd /system/bin/netd
     class main
@@ -1286,7 +1286,7 @@ service media /system/bin/mediaserver
     class main
     user media
     group system audio camera inet net_bt net_bt_admin net_raw net_bw_acct drmrpc sdcard_r shell mediadrm qcom_diag lgt_gid media_rw radio
-    ioprio rt 4
+#    ioprio rt 4
 
 service apaservice /system/bin/apaservice
     class main
