@@ -75,7 +75,7 @@ static int rtcc_grade[RTCC_GRADE_NUM] = {
 };
 // These values will be changed when system is booting up
 static int rtcc_minfree[RTCC_GRADE_NUM] = {
-	56 * 1024, // 224MB 
+	56 * 1024, // 224MB
 	48 * 1024, // 192MB
 	40 * 1024, // 160MB
 	32 * 1024, // 128MB
@@ -255,7 +255,7 @@ static int rtcc_idle_handler(struct notifier_block *nb, unsigned long val, void 
 	if (likely(time_before(jiffies, prev_jiffy + rtcc_reclaim_interval)))
 		return 0;
 
-	if (unlikely(atomic_read(&kswapd_running) == 1)) 
+	if (unlikely(atomic_read(&kswapd_running) == 1))
 		return 0;
 
 	if (unlikely(idle_cpu(task_cpu(krtccd)) && this_cpu_loadx(3) == 0) || rtcc_boost_mode) {
