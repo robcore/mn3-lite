@@ -770,7 +770,7 @@ pushtodevice() {
                     adb shell sync
         			adb reboot
                 else
-                    echo "Skipping Reboot due to command line option!"
+                    echo "Skipping Reboot due to noreboot flag!"
                 fi
 			else
 				echo "FAILED to push $RDIR/$MX_KERNEL_VERSION.zip to $ADBPUSHLOCATION/$MX_KERNEL_VERSION.zip over ADB!"
