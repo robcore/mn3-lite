@@ -705,7 +705,7 @@ create_zip() {
 	zip -v -r -9 -y - * > "$ZDIR/$MX_KERNEL_VERSION.zip"
 	if [ ! -f "$ZDIR/$MX_KERNEL_VERSION.zip" ]
 	then
-		warnandfail "$RDIR/$MX_KERNEL_VERSION.zip does not exist!"
+		warnandfail "$ZDIR/$MX_KERNEL_VERSION.zip does not exist!"
 	fi
 
     cd "$RDIR" || warnandfail "Failed to cd to $RDIR"
