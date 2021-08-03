@@ -18,6 +18,7 @@
 #include <asm/cacheflush.h>
 #include <linux/fdtable.h>
 #include <linux/file.h>
+#include <linux/freezer.h>
 #include <linux/fs.h>
 #include <linux/list.h>
 #include <linux/miscdevice.h>
@@ -506,8 +507,8 @@ static void binder_set_nice(long nice)
 	}
 	min_nice = 20 - current->signal->rlim[RLIMIT_NICE].rlim_cur;
 	binder_debug(BINDER_DEBUG_PRIORITY_CAP,
-		     "%d: nice value %ld not allowed use %ld instead\n",
-		      current->pid, nice, min_nice);
+		     "binder: %d: nice value %ld not allowed use "
+		     "%ld instead\n", current->pid, nice, min_nice);
 	set_user_nice(current, min_nice);
 	if (min_nice < 20)
 		return;
@@ -2294,13 +2295,13 @@ retry:
 			if (!binder_has_proc_work(proc, thread))
 				ret = -EAGAIN;
 		} else
-			ret = wait_event_interruptible_exclusive(proc->wait, binder_has_proc_work(proc, thread));
+			ret = wait_event_freezable_exclusive(proc->wait, binder_has_proc_work(proc, thread));
 	} else {
 		if (non_block) {
 			if (!binder_has_thread_work(thread))
 				ret = -EAGAIN;
 		} else
-			ret = wait_event_interruptible(thread->wait, binder_has_thread_work(thread));
+			ret = wait_event_freezable(thread->wait, binder_has_thread_work(thread));
 	}
 	mutex_lock(&binder_lock);
 	if (wait_for_proc_work)
@@ -2811,6 +2812,30 @@ static long binder_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			goto err;
 		}
 		break;
+
+	/* { System SW, SA_SAMP */
+	// SAMP : Service Process Management
+	case BINDER_GET_PROC_BINDERSTATS: {
+		//get proc stats,(bc_transactions/br_transactions)
+		//used for the binded service
+		int transactions;
+		if (size != sizeof(int)) {
+			ret = -EINVAL;
+			goto err;
+		}
+
+		//Only consider the called times now
+		transactions = proc->stats.br[_IOC_NR(BR_TRANSACTION)] /*+ proc->stats.bc[_IOC_NR(BC_TRANSACTION)] */;
+
+		binder_debug(BINDER_DEBUG_READ_WRITE,
+			"-- BINDER_GET_PROC_BINDERSTATS transactions = %d\n", transactions);
+		if (put_user(transactions, (uint32_t __user *)ubuf)) {
+			ret = -EINVAL;
+			goto err;
+		}
+		break;
+		}
+	/* System SW, SA_SAMP } */
 	default:
 		ret = -EINVAL;
 		goto err;

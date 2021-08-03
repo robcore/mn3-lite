@@ -65,7 +65,7 @@ static uint32_t oom_count = 0;
 #endif
 
 #ifdef MULTIPLE_OOM_KILLER
-#define OOM_DEPTH 4
+#define OOM_DEPTH 5
 #endif
 
 static uint32_t lowmem_debug_level = 0;
