@@ -74,14 +74,6 @@ export CROSS_COMPILE="$TOOLCHAIN"
 
 if [ "$1" != "-b" ] && [ "$1" != "--bsd" ] && [ "$1" != "-c" ] && [ "$1" != "--clean" ]
 then
-    if [ "$2" = "noreboot" ] || [ "$1" = "-anr" ] || [ "$1" = "--allnoreboot" ] || [ -f "$NOREBOOTOPFILE" ]
-    then
-        NOREBOOT="true"
-        echo "Script will not reboot after recovery install!"
-    else
-        NOREBOOT="false"
-    fi
-
     if [ "$2" = "reboot" ] || [ "$1" = "-ar" ] || [ "$1" = "--allreboot" ]
     then
         AUTOREBOOT="true"
@@ -89,6 +81,15 @@ then
         echo "Script will automatically reboot into recovery!"
     else
         AUTOREBOOT="false"
+    fi
+
+    if [ "$2" = "noreboot" ] || [ "$1" = "-anr" ] || [ "$1" = "--allnoreboot" ] || [ -f "$NOREBOOTOPFILE" ]
+    then
+        NOREBOOT="true"
+        echo "NOREBOOT option has been selected."
+        echo "Script will not reboot after recovery install!"
+    else
+        NOREBOOT="false"
     fi
 fi
 
