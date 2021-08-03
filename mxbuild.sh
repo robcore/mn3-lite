@@ -22,6 +22,7 @@ warnandfailearly() {
 [ ! -d "/root/mx_toolchains" ] && warnandfailearly "/root/mx_toolchains folder does not exist!"
 
 RDIR="/root/mn3lite"
+ZDIR="/root/mn3-lite-zips"
 MXPREFIX="machinexlite-Mark"
 MXSUFFIX="-hltetmo"
 
@@ -410,7 +411,7 @@ handle_existing() {
 		warnandfail "FATAL ERROR! Failed to read version from .oldversion"
 	fi
 
-	if [ ! -f "$RDIR/${MXPREFIX}${OLDVER}${MXSUFFIX}.zip" ]
+	if [ ! -f "$ZDIR/${MXPREFIX}${OLDVER}${MXSUFFIX}.zip" ]
 	then
 		echo "Version Override!"
 		echo "Previous version was not completed!"
@@ -451,7 +452,7 @@ handle_existing() {
 			echo "Rebulding old version has been selected"
 			echo "Removing old zip files..."
 			MX_KERNEL_VERSION="${MXPREFIX}${OLDVER}${MXSUFFIX}"
-			rm -f "$RDIR/$MX_KERNEL_VERSION.zip"
+			rm -f "$ZDIR/$MX_KERNEL_VERSION.zip"
 		elif [ "$CURVER" = "new" ]
 		then
 			echo "Building new version has been selected"
@@ -477,7 +478,7 @@ rebuild() {
     rm "$RDIR/localversion" &> /dev/null
     echo "$MX_KERNEL_VERSION" > "$RDIR/localversion"
 	echo "Removing old zip files..."
-	rm -f "$RDIR/$MX_KERNEL_VERSION.zip"
+	rm -f "$ZDIR/$MX_KERNEL_VERSION.zip"
 	echo "Kernel version is: $MX_KERNEL_VERSION"
 	echo "--------------------------------"
 
@@ -701,8 +702,8 @@ create_zip() {
 	#		cp -pa "$MXMODS" "$ZIPFOLDER/system/lib/modules/" || warnandfail "Failed to copy new modules to zip!"
 	#	fi
 	#done
-	zip -r -9 -y - * > "$RDIR/$MX_KERNEL_VERSION.zip"
-	if [ ! -f "$RDIR/$MX_KERNEL_VERSION.zip" ]
+	zip -r -9 -y - * > "$ZDIR/$MX_KERNEL_VERSION.zip"
+	if [ ! -f "$ZDIR/$MX_KERNEL_VERSION.zip" ]
 	then
 		warnandfail "$RDIR/$MX_KERNEL_VERSION.zip does not exist!"
 	fi
@@ -711,14 +712,14 @@ create_zip() {
 
 	echo "Kernel $MX_KERNEL_VERSION.zip finished"
 	echo "Filepath: "
-	echo "$RDIR/$MX_KERNEL_VERSION.zip"
+	echo "$ZDIR/$MX_KERNEL_VERSION.zip"
     stop_build_timer
 
 }
 
 pushtodevice() {
 
-	if [ -s "$RDIR/$MX_KERNEL_VERSION.zip" ]
+	if [ -s "$ZDIR/$MX_KERNEL_VERSION.zip" ]
 	then
 		echo -n "$MX_KERNEL_VERSION.zip" > "$LASTZIPFILE"
 		echo "Starting ADB as root."
@@ -733,14 +734,14 @@ pushtodevice() {
 			adb shell input keyevent KEYCODE_WAKEUP
 			#adb shell input touchscreen swipe 930 880 930 380
 			echo "Transferring via adb to $ADBPUSHLOCATION/$MX_KERNEL_VERSION.zip"
-			adb push "$RDIR/$MX_KERNEL_VERSION.zip" "$ADBPUSHLOCATION"
+			adb push "$ZDIR/$MX_KERNEL_VERSION.zip" "$ADBPUSHLOCATION"
 			if [ "$?" -eq "0" ]
 			then
-				echo "Successfully pushed $RDIR/$MX_KERNEL_VERSION.zip to $ADBPUSHLOCATION over ADB!"
+				echo "Successfully pushed $ZDIR/$MX_KERNEL_VERSION.zip to $ADBPUSHLOCATION over ADB!"
 				#echo "Rebooting Device into Recovery"
 				#adb reboot recovery
 			else
-				echo "Failed to push $RDIR/$MX_KERNEL_VERSION.zip to $ADBPUSHLOCATION over ADB!"
+				echo "Failed to push $ZDIR/$MX_KERNEL_VERSION.zip to $ADBPUSHLOCATION over ADB!"
 			fi
 		elif [ "$(echo $(adb get-state))" = "recovery" ]
 		then
@@ -751,10 +752,10 @@ pushtodevice() {
 			adb "wait-for-recovery";
 			echo "Recovery is Ready"
 			echo "Transferring installer via adb to $ADBPUSHLOCATION/$MX_KERNEL_VERSION.zip"
-			adb push "$RDIR/$MX_KERNEL_VERSION.zip" "$ADBPUSHLOCATION"
+			adb push "$ZDIR/$MX_KERNEL_VERSION.zip" "$ADBPUSHLOCATION"
 			if [ "$?" -eq "0" ]
 			then
-				echo "Successfully pushed $RDIR/$MX_KERNEL_VERSION.zip to $ADBPUSHLOCATION/$MX_KERNEL_VERSION.zip over ADB!"
+				echo "Successfully pushed $ZDIR/$MX_KERNEL_VERSION.zip to $ADBPUSHLOCATION/$MX_KERNEL_VERSION.zip over ADB!"
 				echo "Installing $ADBPUSHLOCATION/$MX_KERNEL_VERSION.zip via open recovery script"
 				adb shell twrp install "$ADBPUSHLOCATION/$MX_KERNEL_VERSION.zip"
                 echo "Pushing Magisk to $ADBPUSHLOCATION/$MAGISKFILE"
@@ -774,21 +775,21 @@ pushtodevice() {
                     echo "Skipping Reboot due to noreboot flag!"
                 fi
 			else
-				echo "FAILED to push $RDIR/$MX_KERNEL_VERSION.zip to $ADBPUSHLOCATION/$MX_KERNEL_VERSION.zip over ADB!"
+				echo "FAILED to push $ZDIR/$MX_KERNEL_VERSION.zip to $ADBPUSHLOCATION/$MX_KERNEL_VERSION.zip over ADB!"
 			fi
 		else
 			echo "Device not Connected.  Skipping adb transfer."
 			#echo "Uploading $MX_KERNEL_VERSION.zip to Google Drive Instead."
-			#/bin/bash /root/google-drive-upload/upload.sh "$RDIR/$MX_KERNEL_VERSION.zip"
+			#/bin/bash /root/google-drive-upload/upload.sh "$ZDIR/$MX_KERNEL_VERSION.zip"
 			#if [ "$?" -eq "0" ]
 			#then
-			#	echo "$RDIR/$MX_KERNEL_VERSION.zip upload SUCCESS!"
+			#	echo "$ZDIR/$MX_KERNEL_VERSION.zip upload SUCCESS!"
 			#else
-			#	echo "$RDIR/$MX_KERNEL_VERSION.zip upload FAILED!"
+			#	echo "$ZDIR/$MX_KERNEL_VERSION.zip upload FAILED!"
 			#fi
 		fi
 	else
-		warnandfail "$RDIR/$MX_KERNEL_VERSION.zip is 0 bytes, something is wrong!"
+		warnandfail "$ZDIR/$MX_KERNEL_VERSION.zip is 0 bytes, something is wrong!"
 	fi
 	adb kill-server || echo "Failed to kill ADB server!"
 	cd "$RDIR" || warnandfail "Failed to cd to $RDIR"
