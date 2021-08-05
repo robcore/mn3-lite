@@ -35,18 +35,15 @@ on early-init
     chmod 0775 /mnt
 
 on init
+	sysclktz 0
+	loglevel 3
+	ffu
 
 	setprop ro.boot.selinux 0
 
     write /sys/devices/system/cpu/cpu1/online 1
     write /sys/devices/system/cpu/cpu2/online 1
     write /sys/devices/system/cpu/cpu3/online 1
-
-	sysclktz 0
-
-	loglevel 3
-
-	ffu
 
 	# SEC_SELINUX
 	# for audit message
@@ -228,6 +225,7 @@ on late-init
     trigger early-fs
     trigger fs
     trigger post-fs
+    trigger post-fs-data
 
     # Load properties from /system/ + /factory after fs mount. Place
     # this in another action so that the load will be scheduled after the prior
@@ -236,8 +234,7 @@ on late-init
 	# Now we can mount /data. File encryption requires keymaster to decrypt
 	# /data, which in turn can only be loaded when system properties are present
 
-    trigger post-fs-data
-	trigger load_persist_props_action
+	#trigger load_persist_props_action
 
     # Remove a file to wake up anything waiting for firmware.
     trigger firmware_mounts_complete
@@ -261,7 +258,7 @@ on post-fs
 #    restorecon_recursive /cache
 
     # This may have been created by the recovery system with odd permissions
-	mkdir /cache/recovery 0770
+	mkdir /cache/recovery 0770 system cache
     chown system cache /cache/recovery
     chmod 0770 /cache/recovery
 
