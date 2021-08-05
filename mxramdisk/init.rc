@@ -13,15 +13,16 @@ import /init.carrier.rc
 import /init.container.rc
 
 on early-init
+
+    # Set the security context for the init process.
+    # This should occur before anything else (e.g. ueventd) is started.
+    setcon u:r:init:s0
+
     # Set init and its forked children's oom_adj.
     write /proc/1/oom_score_adj -1000
 
     # Apply strict SELinux checking of PROT_EXEC on mmap/mprotect calls.
     write /sys/fs/selinux/checkreqprot 0
-
-    # Set the security context for the init process.
-    # This should occur before anything else (e.g. ueventd) is started.
-    setcon u:r:init:s0
 
     # Set the security context of /adb_keys if present.
     restorecon /adb_keys
@@ -130,6 +131,12 @@ on init
     write /proc/sys/kernel/panic_on_oops 1
     write /proc/sys/kernel/hung_task_timeout_secs 0
     write /proc/cpu/alignment 4
+
+    # scheduler tunables
+    # Disable auto-scaling of scheduler tunables with hotplug. The tunables
+    # will vary across devices in unpredictable ways if allowed to scale with
+    # cpu cores.
+    write /proc/sys/kernel/sched_tunable_scaling 0
     write /proc/sys/kernel/sched_latency_ns 10000000
     write /proc/sys/kernel/sched_wakeup_granularity_ns 2000000
     write /proc/sys/kernel/sched_compat_yield 1
@@ -149,7 +156,11 @@ on init
     # set fwmark on accepted sockets
     write /proc/sys/net/ipv4/tcp_fwmark_accept 1
 
-# Create cgroup mount points for process groups
+    # disable icmp redirects
+    write /proc/sys/net/ipv4/conf/all/accept_redirects 0
+    write /proc/sys/net/ipv6/conf/all/accept_redirects 0
+
+    # Create cgroup mount points for process groups
     mkdir /dev/cpuctl
     mount cgroup none /dev/cpuctl cpu
     chown system system /dev/cpuctl
@@ -217,7 +228,6 @@ on late-init
     trigger early-fs
     trigger fs
     trigger post-fs
-    trigger post-fs-data
 
     # Load properties from /system/ + /factory after fs mount. Place
     # this in another action so that the load will be scheduled after the prior
@@ -226,7 +236,8 @@ on late-init
 	# Now we can mount /data. File encryption requires keymaster to decrypt
 	# /data, which in turn can only be loaded when system properties are present
 
-#	trigger load_persist_props_action
+    trigger post-fs-data
+	trigger load_persist_props_action
 
     # Remove a file to wake up anything waiting for firmware.
     trigger firmware_mounts_complete
@@ -293,6 +304,8 @@ on post-fs-data
     restorecon_msc
 #    restorecon_recursive /data/system/container
 #    restorecon_recursive /data/media
+
+    start vold
 
     # Avoid predictable entropy pool. Carry over entropy from previous boot.
     copy /data/system/entropy.dat /dev/urandom
@@ -978,7 +991,7 @@ on boot
 # Define default initial receive window size in segments.
     setprop net.tcp.default_init_rwnd 60
 
-#    write /sys/block/mmcblk0/queue/scheduler noop
+    write /sys/block/mmcblk0/queue/scheduler noop
     copy /system/etc/battery_charging_temp.data /sys/class/power_supply/battery/batt_temp_table
 
  # Set this property so surfaceflinger is not started by system_init
@@ -1203,7 +1216,7 @@ service servicemanager /system/bin/servicemanager
 service vold /system/bin/vold
     class core
     socket vold stream 0660 root mount
-#    ioprio be 2
+    ioprio be 2
     socket dir_enc_report stream 0660 root mount
 #    socket frigate stream 0660 system system
 
@@ -1211,7 +1224,7 @@ service epmd /system/bin/epmd
     class main
     socket epm stream 0660 system system
     socket ppm stream 0660 system system
-#    ioprio be 2
+    ioprio be 2
 
 service netd /system/bin/netd
     class main
@@ -1290,7 +1303,7 @@ service media /system/bin/mediaserver
     class main
     user media
     group system audio camera inet net_bt net_bt_admin net_raw net_bw_acct drmrpc sdcard_r shell mediadrm qcom_diag lgt_gid media_rw radio
-#    ioprio rt 4
+    ioprio rt 4
 
 service apaservice /system/bin/apaservice
     class main

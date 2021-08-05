@@ -231,7 +231,7 @@
     setprop persist.sys.wfd.virtual 0
 
 # Set this property so surfaceflinger is not started by system_init
-#    setprop system_init.startsurfaceflinger 0
+    setprop system_init.startsurfaceflinger 0
 
 # Start the following services needed for fftm
     start config_bluetooth
