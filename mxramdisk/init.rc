@@ -299,8 +299,8 @@ on post-fs-data
     # We restorecon /data in case the userdata partition has been reset.
     restorecon /data
     restorecon_msc
-#    restorecon_recursive /data/system/container
-#    restorecon_recursive /data/media
+    restorecon_recursive /data/system/container
+    restorecon_recursive /data/media
 
     start vold
 
@@ -420,11 +420,11 @@ on post-fs-data
     mkdir /data/log 0775 system log
     chown system log /data/log
     chmod 0775 /data/log
-    restorecon /data/log
 
     mkdir /data/anr 0775 system system
     chown system system /data/anr
     chmod 0775 /data/anr
+    restorecon /data/log
     restorecon /data/anr
 
     # create dalvik-cache, so as to enforce our permissions
@@ -482,16 +482,17 @@ on post-fs-data
     chown root root /system/lib/drm
     chmod 0775 /system/lib/drm
 
-    restorecon -R /efs
-    restorecon -R /carrier
-#    restorecon_recursive /data/misc/keystore
-#    restorecon_recursive /data/property
-#    restorecon_recursive /data/security
+    restorecon_recursive /efs
+    restorecon_recursive /carrier
+    restorecon_recursive /data/misc/keystore
+    restorecon_recursive /data/property
+    restorecon_recursive /data/security
 
 # DRK permission
     mkdir /efs/prov 0770 radio system
     chown radio system /efs/prov/libdevkm.lock
     chmod 0660 /efs/prov/libdevkm.lock
+    restorecon_recursive /efs
 
 # CS socket
     mkdir /dev/socket/cs_socket 0770 system system

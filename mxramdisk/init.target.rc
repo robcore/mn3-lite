@@ -64,7 +64,7 @@ on fs
     chmod 0771 /efs
     restorecon_recursive /efs
     chown root system /dev/hw_random
-    chmod 0644 /dev/hw_random
+    chmod 0640 /dev/hw_random
 
 on fs_sec_selinux
     wait /dev/block/platform/msm_sdcc.1/by-name/apnhlos
