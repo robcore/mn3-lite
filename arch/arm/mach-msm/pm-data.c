@@ -139,7 +139,7 @@ struct msm_pm_platform_data msm_pm_sleep_modes[] = {
 // Usage>>>
 //		enter_mode : msm_pm_sleep_mode_enable(MSM_PM_SLEEP_MODE_RETENTION, 0);
 //		exit_mode : msm_pm_sleep_mode_enable(MSM_PM_SLEEP_MODE_RETENTION, 1);
-void msm_pm_sleep_mode_enable(unsigned int mode, bool enable)
+static void msm_pm_sleep_mode_enable(unsigned int mode, bool enable)
 {
 	unsigned int cpu;
 	int idx;
