@@ -21,6 +21,8 @@ on early-init
     # Set init and its forked children's oom_adj.
     write /proc/1/oom_score_adj -1000
 
+    # Ensure SELinux is non-enforcing.
+    write /sys/fs/selinux/enforce 0
     # Apply strict SELinux checking of PROT_EXEC on mmap/mprotect calls.
     write /sys/fs/selinux/checkreqprot 0
 
@@ -254,7 +256,7 @@ on post-fs
     # We chown/chmod /cache again so because mount is run as root + defaults
     chown system cache /cache
     chmod 0770 /cache
-#    # We restorecon /cache in case the cache partition has been reset.
+    # We restorecon /cache in case the cache partition has been reset.
 #    restorecon_recursive /cache
 
     # This may have been created by the recovery system with odd permissions
@@ -1162,6 +1164,7 @@ on property:ro.debuggable=1
 
 # SEC_SELINUX
 on property:selinux.reload_policy=1
+    write /sys/fs/selinux/enforce 0
     chown system system /sys/fs/selinux/enforce
     chown -R system system /sys/fs/selinux/booleans
     chown system system /sys/fs/selinux/commit_pending_bools
@@ -1279,6 +1282,7 @@ service surfaceflinger /system/bin/surfaceflinger
     class core
     user system
     group graphics drmrpc
+    ioprio rt 3
     onrestart restart zygote
 
 service SIDESYNC_service /system/bin/ss_conn_daemon
