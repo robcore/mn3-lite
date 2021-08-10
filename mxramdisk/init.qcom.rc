@@ -235,6 +235,7 @@ on post-fs-data
 
     mkdir /data/media 0770 media_rw media_rw
     chown media_rw media_rw /data/media
+    chmod 0770 /data/media
 
     mkdir /data/misc/bluetooth 0770 bluetooth bluetooth
 
@@ -862,7 +863,7 @@ service sdcard /system/bin/sdcard -u 1023 -g 1023 -l -r /data/media /mnt/shell/e
 
 service fuse_extSdCard /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d -f /mnt/media_rw/extSdCard /storage/extSdCard
     class late_start
-    disabled
+#    disabled
     oneshot
 
 service fuse_UsbDriveA /system/bin/sdcard -u 1023 -g 1023 -d -f /mnt/media_rw/UsbDriveA /storage/UsbDriveA
