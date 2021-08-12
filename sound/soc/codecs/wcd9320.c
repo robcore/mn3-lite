@@ -86,8 +86,9 @@ static struct snd_soc_codec *direct_codec;
 static atomic_t kp_taiko_priv;
 struct wake_lock hph_playback_wake_lock;
 struct wake_lock spk_playback_wake_lock;
+#ifdef CONFIG_SAMSUNG_JACK_SYSFS
 extern int secjack_state;
-
+#endif
 static struct afe_param_slimbus_slave_port_cfg taiko_slimbus_slave_port_cfg = {
 	.minor_version = 1,
 	.slimbus_dev_id = AFE_SLIMBUS_DEVICE_1,
@@ -607,7 +608,10 @@ static unsigned int compander_gain_boost = 0;
 static u32 sc_peak_det_timeout = 0x09;
 static u32 sc_rms_meter_div_fact = 0x0B;
 static u32 sc_rms_meter_resamp_fact = 0x28;
+#ifdef CONFIG_WCD_BIAS_ACCESS
 static u8 hph_pa_bias = 0x7A;
+static u8 cnp_bias = 0x8A;
+#endif
 static unsigned int headphone_hdc = 0;
 static unsigned int speaker_hdc = 0;
 
@@ -616,7 +620,6 @@ static unsigned int speaker_hdc = 0;
 #define TAIKO_A_RX_HPH_BIAS_CNP__POR (0x8A)
 */
 
-static u8 cnp_bias = 0x8A;
 unsigned int anc_delay = 1;
 static unsigned int hph_autochopper = 0;
 static unsigned int chopper_bypass = 0;
@@ -688,7 +691,7 @@ static void spk_wake_unlock(void)
 
     wake_unlock(&spk_playback_wake_lock);
 }
-
+#ifdef CONFIG_SAMSUNG_JACK_SYSFS
 static bool sec_jacked(void)
 {
     if (secjack_state)
@@ -696,7 +699,7 @@ static bool sec_jacked(void)
 
     return false;
 }
-
+#endif
 static bool hpwidget(void)
 {
     if ((regread(TAIKO_A_RX_HPH_L_STATUS) == PA_STAT_ON &&
@@ -1069,11 +1072,13 @@ static void write_chopper(void)
 
 static void update_bias(void)
 {
+#ifdef CONFIG_WCD_BIAS_ACCESS
     if (hpwidget_any())
         return;
 
    	mx_update_bits(TAIKO_A_RX_HPH_BIAS_PA, 0xff, hph_pa_bias);
     mx_update_bits(TAIKO_A_RX_HPH_BIAS_CNP, 0xff, cnp_bias);
+#endif
 }
 
 static inline void update_interpolator(void)
@@ -1226,7 +1231,6 @@ static int spkr_drv_wrnd_param_set(const char *val,
 		return ret;
 	}
 
-	pr_debug("%s: spkr_drv_wrnd %d -> %d\n", __func__, old, spkr_drv_wrnd);
 	if ((old == -1 || old == 0) && spkr_drv_wrnd == 1) {
 		WCD9XXX_BG_CLK_LOCK(&priv->resmgr);
 		wcd9xxx_resmgr_get_bandgap(&priv->resmgr,
@@ -8299,6 +8303,7 @@ enum {
 	SEC_HEADSET_3POLE				= 2,
 };
 */
+#ifdef CONFIG_SAMSUNG_JACK_SYSFS
 static ssize_t secjack_state_show(struct kobject *kobj,
         struct kobj_attribute *attr, char *buf)
 {
@@ -8309,7 +8314,7 @@ static ssize_t secjack_state_show(struct kobject *kobj,
     else
         return sprintf(buf, "%s\n", "ERROR");
 }
-
+#endif
 static ssize_t compander1_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
@@ -9261,6 +9266,7 @@ static ssize_t rms_meter_resamp_fact_store(struct kobject *kobj,
 	return count;
 }
 
+#ifdef CONFIG_WCD_BIAS_ACCESS
 static ssize_t hph_pa_bias_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
@@ -9278,9 +9284,12 @@ static ssize_t hph_pa_bias_store(struct kobject *kobj,
 		uval = 85;
 	if (uval > 170)
 		uval = 170;
-
-    if (sec_jacked() || hpwidget_any() ||
+#ifdef CONFIG_SAMSUNG_JACK_SYSFS
+    if (sec_jacked() || hpwidget_any() || \
         spkwidget_active())
+#else
+    if (hpwidget_any() || spkwidget_active())
+#endif
         return count;
 
 	hph_pa_bias = uval;
@@ -9307,9 +9316,12 @@ static ssize_t cnp_bias_store(struct kobject *kobj,
 		uval = 85;
 	if (uval > 170)
 		uval = 170;
-
-    if (sec_jacked() || hpwidget_any() ||
+#ifdef CONFIG_SAMSUNG_JACK_SYSFS
+    if (sec_jacked() || hpwidget_any() || \
         spkwidget_active())
+#else
+    if (hpwidget_any() || spkwidget_active())
+#endif
         return count;
 
 	cnp_bias = uval;
@@ -9318,7 +9330,7 @@ static ssize_t cnp_bias_store(struct kobject *kobj,
 
 	return count;
 }
-
+#endif
 static ssize_t anc_delay_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
@@ -9372,12 +9384,12 @@ static struct kobj_attribute headphone_dac_enabled_attribute =
 	__ATTR(headphone_dac_enabled, 0444,
 		headphone_dac_enabled_show,
 		NULL);
-
+#ifdef CONFIG_SAMSUNG_JACK_SYSFS
 static struct kobj_attribute secjack_state_attribute =
 	__ATTR(secjack_state, 0444,
 		secjack_state_show,
 		NULL);
-
+#endif
 static struct kobj_attribute compander1_attribute =
 	__ATTR(compander1, 0444,
 		compander1_show,
@@ -9572,6 +9584,7 @@ static struct kobj_attribute rms_meter_resamp_fact_attribute =
 		rms_meter_resamp_fact_show,
 		rms_meter_resamp_fact_store);
 
+#ifdef CONFIG_WCD_BIAS_ACCESS
 static struct kobj_attribute hph_pa_bias_attribute =
 	__ATTR(hph_pa_bias, 0644,
 		hph_pa_bias_show,
@@ -9581,6 +9594,7 @@ static struct kobj_attribute cnp_bias_attribute =
 	__ATTR(cnp_bias, 0644,
 		cnp_bias_show,
 		cnp_bias_store);
+#endif
 
 static struct kobj_attribute mx_hw_eq_attribute =
 	__ATTR(mx_hw_eq, 0644,
@@ -9589,7 +9603,9 @@ static struct kobj_attribute mx_hw_eq_attribute =
 
 static struct attribute *sound_control_attrs[] = {
         &headphone_dac_enabled_attribute.attr,
+#ifdef CONFIG_SAMSUNG_JACK_SYSFS
         &secjack_state_attribute.attr,
+#endif
 		&compander1_attribute.attr,
 		&compander_enabled_attribute.attr,
 		&hph_status_attribute.attr,
@@ -9625,8 +9641,10 @@ static struct attribute *sound_control_attrs[] = {
 		&peak_det_timeout_attribute.attr,
 		&rms_meter_div_fact_attribute.attr,
 		&rms_meter_resamp_fact_attribute.attr,
+#ifdef CONFIG_WCD_BIAS_ACCESS
 		&hph_pa_bias_attribute.attr,
 		&cnp_bias_attribute.attr,
+#endif
 		&mx_hw_eq_attribute.attr,
 		NULL,
 };

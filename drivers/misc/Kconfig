@@ -444,6 +444,14 @@ config SAMSUNG_JACK
 	 To samsung jack is reviewed and supported in all the
 	 samsung devices.
 
+config SAMSUNG_JACK_SYSFS
+	bool "User space access for samsung jack state"
+	depends on INPUT && SAMSUNG_JACK
+	default n
+	 ---help---
+	 This enables or disables a userspace back door into
+     the state of the current jack status.  UNSTABLE!
+
 config EARJACK_ADC_SYSFS
 	bool "EarJack & BTN adc sysfs"
 	depends on SAMSUNG_JACK
@@ -870,17 +878,6 @@ config SEC_MISC
 	  This creates sys fs entries for changing
 	  debug levels. The debug level is stored in
 	  Param partition
-
-config SAMSUNG_JACK
-	bool "3.5 PI Jack driver for Samsung devices"
-	depends on INPUT
-	default n
-	help
-	 This is 3.5 PI JACK driver for Samsung devies.
-	 sec_jack from samsung driver used for samsung devices.
-
-	 To samsung jack is reviewed and supported in all the
-	 samsung devices.
 
 config USB_HSIC_SMSC_HUB
 	tristate "Support for HSIC based MSM on-chip SMSC3503 HUB"

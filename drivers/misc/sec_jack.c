@@ -128,9 +128,9 @@ static struct gpio_event_platform_data sec_jack_input_data = {
 	.info = sec_jack_input_info,
 	.info_count = ARRAY_SIZE(sec_jack_input_info),
 };
-
+#ifdef CONFIG_SAMSUNG_JACK_SYSFS
 int secjack_state;
-
+#endif
 #ifdef CONFIG_ARCH_MSM8226
 /*Enabling Ear Mic Bias of WCD Codec*/
 extern void msm8226_enable_ear_micbias(bool state);
@@ -389,8 +389,9 @@ static void sec_jack_set_type(struct sec_jack_info *hi, int jack_type)
 	}
 
 	hi->cur_jack_type = jack_type;
+#ifdef CONFIG_SAMSUNG_JACK_SYSFS
     secjack_state = hi->cur_jack_type;
-	pr_debug("%s : jack_type = %d\n", __func__, jack_type);
+#endif
 	switch_set_state(&switch_jack_detection, jack_type);
 }
 
@@ -478,7 +479,8 @@ static ssize_t earjack_state_onoff_show(struct device *dev,
 
 	if (hi->cur_jack_type == SEC_HEADSET_4POLE)
 		value = 1;
-
+    else if (hi->cur_jack_type == SEC_HEADSET_3POLE)
+        value = 2;
 	return snprintf(buf, 4, "%d\n", value);
 }
 

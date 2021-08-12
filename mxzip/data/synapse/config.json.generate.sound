@@ -171,18 +171,6 @@ busybox cat << CTAG
                 default:$(busybox cat /sys/kernel/sound_control/hph_poweramp_gain | cut -d ' ' -f 2),
                 action:"soundcontrol pagainright"
             }},
-            { SLiveLabel:{
-                refresh:1000,
-                action:"soundcontrol jack_locked HPH_Bias"
-            }},
-            { SSeekBar:{
-                title:"Headphone Poweramp Bias",
-                max:170,
-                min:85,
-                step:1,
-                default:$(busybox cat /sys/kernel/sound_control/hph_pa_bias),
-                action:"soundcontrol hph_pa_bias"
-            }},
             { SSpacer:{
                 height: 1
             }},
@@ -354,21 +342,6 @@ busybox cat << CTAG
                 description:"Prevent the wave generator from switching to 20ms from 5ms when headphones are used",
                 default:$(busybox cat /sys/kernel/sound_control/wavegen_override),
                 action:"soundcontrol wavegen_override"
-            }},
-            { SSpacer:{
-                height: 1
-            }},
-            { SLiveLabel:{
-                refresh:1000,
-                action:"soundcontrol jack_locked CNP_Bias"
-            }},
-            { SSeekBar:{
-                title:"CNP Bias",
-                max:170,
-                min:85,
-                step:1,
-                default:$(busybox cat /sys/kernel/sound_control/cnp_bias),
-                action:"soundcontrol cnp_bias"
             }},
             { SSpacer:{
                 height: 1

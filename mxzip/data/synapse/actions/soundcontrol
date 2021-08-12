@@ -555,36 +555,36 @@ then
     else
         busybox cat /sys/kernel/sound_control/rms_meter_resamp_fact
     fi
-elif [ "$1" = "hph_pa_bias" ]
-then
-    CURVAL="$(busybox cat /sys/kernel/sound_control/hph_pa_bias)"
-    if [ -n "$2" ]
-    then
-        if [ "$2" = "$CURVAL" ]
-        then
-            busybox cat /sys/kernel/sound_control/hph_pa_bias
-        else
-            busybox echo "$2" > /sys/kernel/sound_control/hph_pa_bias
-            busybox cat /sys/kernel/sound_control/hph_pa_bias
-        fi
-    else
-        busybox cat /sys/kernel/sound_control/hph_pa_bias
-    fi
-elif [ "$1" = "cnp_bias" ]
-then
-    CURVAL="$(busybox cat /sys/kernel/sound_control/cnp_bias)"
-    if [ -n "$2" ]
-    then
-        if [ "$2" = "$CURVAL" ]
-        then
-            busybox cat /sys/kernel/sound_control/cnp_bias
-        else
-            busybox echo "$2" > /sys/kernel/sound_control/cnp_bias
-            busybox cat /sys/kernel/sound_control/cnp_bias
-        fi
-    else
-        busybox cat /sys/kernel/sound_control/cnp_bias
-    fi
+#elif [ "$1" = "hph_pa_bias" ]
+#then
+#    CURVAL="$(busybox cat /sys/kernel/sound_control/hph_pa_bias)"
+#    if [ -n "$2" ]
+#    then
+#        if [ "$2" = "$CURVAL" ]
+#        then
+#            busybox cat /sys/kernel/sound_control/hph_pa_bias
+#        else
+#            busybox echo "$2" > /sys/kernel/sound_control/hph_pa_bias
+#            busybox cat /sys/kernel/sound_control/hph_pa_bias
+#        fi
+#    else
+#        busybox cat /sys/kernel/sound_control/hph_pa_bias
+#    fi
+#elif [ "$1" = "cnp_bias" ]
+#then
+#    CURVAL="$(busybox cat /sys/kernel/sound_control/cnp_bias)"
+#    if [ -n "$2" ]
+#    then
+#        if [ "$2" = "$CURVAL" ]
+#        then
+#            busybox cat /sys/kernel/sound_control/cnp_bias
+#        else
+#            busybox echo "$2" > /sys/kernel/sound_control/cnp_bias
+#            busybox cat /sys/kernel/sound_control/cnp_bias
+#        fi
+#    else
+#        busybox cat /sys/kernel/sound_control/cnp_bias
+#    fi
 elif [ "$1" = "compander1" ]
 then
     while read -r LINE; 
@@ -616,25 +616,25 @@ then
             busybox echo "The Below Setting is Unlocked"
         fi
     fi
-elif [ "$1" = "jack_locked" ]
-then
-    CURVAL="$(busybox cat /sys/kernel/sound_control/secjack_state)"
-    if [ -n "$2" ]
-    then
-        if [ "$CURVAL" = "Unplugged" ]
-        then
-            busybox echo "$2 Setting Unlocked"
-        else
-            busybox echo "$2 Setting Locked"
-        fi
-    else
-        if [ "$CURVAL" = "Unplugged" ]
-        then
-            busybox echo "The Below Setting is Unlocked"
-        else
-            busybox echo "The Below Setting is Locked"
-        fi
-    fi
+#elif [ "$1" = "jack_locked" ]
+#then
+#    CURVAL="$(busybox cat /sys/kernel/sound_control/secjack_state)"
+#    if [ -n "$2" ]
+#    then
+#        if [ "$CURVAL" = "Unplugged" ]
+#        then
+#            busybox echo "$2 Setting Unlocked"
+#        else
+#            busybox echo "$2 Setting Locked"
+#        fi
+#    else
+#        if [ "$CURVAL" = "Unplugged" ]
+#        then
+#            busybox echo "The Below Setting is Unlocked"
+#        else
+#            busybox echo "The Below Setting is Locked"
+#        fi
+#    fi
 elif [ "$1" = "compander_status" ]
 then
     while read -r LINE; 
@@ -679,5 +679,11 @@ then
     busybox cat /sys/kernel/sound_control/headphone_dac_enabled
 elif [ "$1" = "secjack_state" ]
 then
-    busybox cat /sys/kernel/sound_control/secjack_state
+    CURVAL="$(busybox cat /sys/class/audio/earjack/state)"
+    if [ "$CURVAL" = "0" ]
+    then
+        busybox echo "Headphones Unplugged"
+    else
+        busybox echo "Headphones Connected"
+    fi
 fi

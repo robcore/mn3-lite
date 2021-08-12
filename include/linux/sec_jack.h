@@ -50,7 +50,9 @@ struct sec_jack_platform_data {
 	int mpp_ch_scale[3];
 };
 
+#ifdef CONFIG_SAMSUNG_JACK_SYSFS
 extern int secjack_state;
+#endif
 
 #endif
 
