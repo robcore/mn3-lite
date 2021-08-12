@@ -445,12 +445,9 @@ config SAMSUNG_JACK
 	 samsung devices.
 
 config SAMSUNG_JACK_SYSFS
-	bool "User space access for samsung jack state"
+	bool "User space state crap"
 	depends on INPUT && SAMSUNG_JACK
 	default n
-	 ---help---
-	 This enables or disables a userspace back door into
-     the state of the current jack status.  UNSTABLE!
 
 config EARJACK_ADC_SYSFS
 	bool "EarJack & BTN adc sysfs"
