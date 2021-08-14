@@ -80,8 +80,11 @@ static const int bfq_back_max = 16 * 1024;
 static const int bfq_back_penalty = 2;
 
 /* Idling period duration, in jiffies. */
-static int bfq_slice_idle = HZ / 125;
-
+#ifndef CONFIG_HZ_1000
+static int bfq_slice_idle = 0;
+#else
+static int bfq_slice_idle = 10;
+#endif
 /* Default maximum budget values, in sectors and number of requests. */
 static const int bfq_default_max_budget = 16 * 1024;
 static const int bfq_max_budget_async_rq = 4;
@@ -4162,9 +4165,10 @@ static int __init bfq_init(void)
 	/*
 	 * Can be 0 on HZ < 1000 setups.
 	 */
+#ifndef CONFIG_HZ_1000
 	if (bfq_slice_idle == 0)
 		bfq_slice_idle = 1;
-
+#endif
 	if (bfq_timeout_async == 0)
 		bfq_timeout_async = 1;
 
