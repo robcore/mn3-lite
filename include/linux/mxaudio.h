@@ -27,9 +27,10 @@ void lock_sound_control(struct wcd9xxx_core_resource *core_res,
 extern u8 hphl_cached_gain;
 extern u8 hphr_cached_gain;
 extern u8 speaker_cached_gain;
+#if 0
 extern u8 iir1_cached_gain;
 extern u8 iir2_cached_gain;
-
+#endif
 #ifdef CONFIG_RAMP_VOLUME
 extern unsigned int ramp_volume;
 #endif

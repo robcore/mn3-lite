@@ -122,8 +122,10 @@ EXPORT_SYMBOL(wcd9xxx_reg_read);
 extern u8 hphl_cached_gain;
 extern u8 hphr_cached_gain;
 extern u8 speaker_cached_gain;
+#if 0
 extern u8 iir1_cached_gain; /*0x340*/
 extern u8 iir2_cached_gain; /*0x350*/
+#endif
 #ifdef CONFIG_RAMP_VOLUME
 extern unsigned int ramp_volume;
 #endif
@@ -256,6 +258,7 @@ static int __wcd9xxx_reg_write(struct wcd9xxx *wcd9xxx,
 			else
 				ret = wcd9xxx_write(wcd9xxx, reg, 1, &speaker_cached_gain, false);
 			break;
+#if 0
 		case 0x340:
 			if (val == 172)
 				ret = wcd9xxx_write(wcd9xxx, reg, 1, &val, false);
@@ -268,7 +271,7 @@ static int __wcd9xxx_reg_write(struct wcd9xxx *wcd9xxx,
 			else
 				ret = wcd9xxx_write(wcd9xxx, reg, 1, &iir2_cached_gain, false);
 			break;
-#if 0
+
 		case 0x341:
 			if (val == 172)
 				ret = wcd9xxx_write(wcd9xxx, reg, 1, &val, false);

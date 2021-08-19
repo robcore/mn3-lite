@@ -773,6 +773,7 @@ static void update_headphone_gain(void)
 	SOC_SINGLE_S8_TLV("IIR2 INP1 Volume", TAIKO_A_CDC_IIR2_GAIN_B1_CTL, -84,
 		40, digital_gain),
 */
+#if 0
 static void update_iir_gain(void)
 {
 	if (!hpwidget())
@@ -783,7 +784,7 @@ static void update_iir_gain(void)
 	regwrite(TAIKO_A_CDC_IIR2_GAIN_B1_CTL, iir2_cached_gain);
 	lock_sound_control(&sound_control_codec_ptr->core_res, 0);
 }
-#if 0
+
 static void update_crossfeed_gain(void)
 {
 	if (!hpwidget())
