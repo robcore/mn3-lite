@@ -295,15 +295,7 @@ static int ashmem_mmap(struct file *file, struct vm_area_struct *vma)
 {
 	struct ashmem_area *asma = file->private_data;
 	int ret = 0;
-#ifdef CONFIG_TIMA_RKP
-	if (vma->vm_end - vma->vm_start) {
-		cpu_v7_tima_iommu_opt(vma->vm_start, vma->vm_end, (unsigned long)vma->vm_mm->pgd);
-		__asm__ __volatile__ (
-		"mcr    p15, 0, r0, c8, c3, 0\n"
-		"dsb\n"
-		"isb\n");
-	}
-#endif
+
 	mutex_lock(&ashmem_mutex);
 	mutex_owner = current;
 	/* user needs to SET_SIZE before mapping */
@@ -481,7 +473,7 @@ static int get_name(struct ashmem_area *asma, void __user *name)
 		len = strlen(asma->name + ASHMEM_NAME_PREFIX_LEN) + 1;
 		memcpy(local_name, asma->name + ASHMEM_NAME_PREFIX_LEN, len);
 	} else {
-		len = sizeof(ASHMEM_NAME_DEF);
+		len = strlen(ASHMEM_NAME_DEF) + 1;
 		memcpy(local_name, ASHMEM_NAME_DEF, len);
 	}
 	mutex_owner = NULL;
@@ -730,10 +722,14 @@ static long ashmem_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	case ASHMEM_SET_SIZE:
 		ret = -EINVAL;
+		mutex_lock(&ashmem_mutex);
+		mutex_owner = current;
 		if (!asma->file) {
 			ret = 0;
 			asma->size = (size_t) arg;
 		}
+		mutex_owner = NULL;
+		mutex_unlock(&ashmem_mutex);
 		break;
 	case ASHMEM_GET_SIZE:
 		ret = asma->size;
@@ -767,20 +763,20 @@ static long ashmem_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 }
 
 static const struct file_operations ashmem_fops = {
-	.owner = THIS_MODULE,
-	.open = ashmem_open,
-	.release = ashmem_release,
-	.read = ashmem_read,
-	.llseek = ashmem_llseek,
-	.mmap = ashmem_mmap,
-	.unlocked_ioctl = ashmem_ioctl,
-	.compat_ioctl = ashmem_ioctl,
+        .owner = THIS_MODULE,
+        .open = ashmem_open,
+        .release = ashmem_release,
+        .read = ashmem_read,
+        .llseek = ashmem_llseek,
+        .mmap = ashmem_mmap,
+        .unlocked_ioctl = ashmem_ioctl,
+        .compat_ioctl = ashmem_ioctl,
 };
 
 static struct miscdevice ashmem_misc = {
-	.minor = MISC_DYNAMIC_MINOR,
-	.name = "ashmem",
-	.fops = &ashmem_fops,
+        .minor = MISC_DYNAMIC_MINOR,
+        .name = "ashmem",
+        .fops = &ashmem_fops,
 };
 
 static int is_ashmem_file(struct file *file)
