@@ -561,14 +561,21 @@ static unsigned short tx_digital_gain_reg[] = {
 u8 hphl_cached_gain;
 u8 hphr_cached_gain;
 u8 speaker_cached_gain;
+/* Mic gain
+ * TAIKO_A_CDC_TX3_VOL_CTL_GAIN
+*/
+
+#if 0
 u8 iir1_cached_gain;
 u8 iir2_cached_gain;
 unsigned int mx_hw_eq = HWEQ_OFF;
+#endif
 #ifdef CONFIG_RAMP_VOLUME
 unsigned int ramp_volume;
 #endif
 static unsigned int headphone_mute;
 static unsigned int speaker_mute;
+#if 0
 static u8 iir1_enabled[BAND_MAX] = { 0, 0, 0, 0, 0 };
 static u8 iir1_band_1[BAND_MAX] = { 0, 0, 0, 0, 0 };
 static u8 iir1_band_2[BAND_MAX] = { 0, 0, 0, 0, 0 };
@@ -581,6 +588,7 @@ static u8 iir2_band_2[BAND_MAX] = { 0, 0, 0, 0, 0 };
 static u8 iir2_band_3[BAND_MAX] = { 0, 0, 0, 0, 0 };
 static u8 iir2_band_4[BAND_MAX] = { 0, 0, 0, 0, 0 };
 static u8 iir2_band_5[BAND_MAX] = { 0, 0, 0, 0, 0 };
+#endif
 static u8 hphl_hpf_cutoff = 0;
 static u8 hphr_hpf_cutoff = 0;
 static u8 speaker_hpf_cutoff = 0;
