@@ -1077,17 +1077,17 @@ static void write_chopper(void)
         mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x20, 0x20);
     }
 }
-
+#ifdef CONFIG_WCD_BIAS_ACCESS
 static void update_bias(void)
 {
-#ifdef CONFIG_WCD_BIAS_ACCESS
-    if (hpwidget_any())
-        return;
-
-   	mx_update_bits(TAIKO_A_RX_HPH_BIAS_PA, 0xff, hph_pa_bias);
-    mx_update_bits(TAIKO_A_RX_HPH_BIAS_CNP, 0xff, cnp_bias);
-#endif
+    if (!hpwidget_any()) {
+       	mx_update_bits(TAIKO_A_RX_HPH_BIAS_PA, 0xff, hph_pa_bias);
+        mx_update_bits(TAIKO_A_RX_HPH_BIAS_CNP, 0xff, cnp_bias);
+    }
 }
+#else
+static void update_bias(void) {}
+#endif
 
 static inline void update_interpolator(void)
 {
@@ -1182,6 +1182,7 @@ enum {
 	BAND_MAX = 5,
 };
  */
+#if 0
 static int read_iir_enable(unsigned short reg, unsigned int iir_slot, unsigned int band_slot)
 {
 	return ((regread((TAIKO_A_CDC_IIR1_CTL + 16 * iir_slot)) &
@@ -1199,7 +1200,7 @@ static void write_iir_enable(unsigned short reg, unsigned int iir_slot, unsigned
 	mx_update_bits((TAIKO_A_CDC_IIR1_CTL + 16 * iir_slot),
 		(1 << band_slot), (value << band_slot));
 }
-
+#endif
 static void update_control_regs(void)
 {
 	write_hpf_cutoff(TAIKO_A_CDC_RX1_B4_CTL);
@@ -8557,6 +8558,7 @@ static ssize_t headphone_mute_store(struct kobject *kobj,
 		40, digital_gain),
 */
 
+#if 0
 static ssize_t iir1_gain_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
@@ -8593,6 +8595,7 @@ static ssize_t iir1_gain_store(struct kobject *kobj,
 
 	return count;
 }
+#endif
 #if 0
 static ssize_t iir1_inp2_gain_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
@@ -8630,9 +8633,7 @@ static ssize_t iir1_inp2_gain_store(struct kobject *kobj,
 
 	return count;
 }
-#endif //0
 
-#if 0
 static ssize_t iir2_inp2_gain_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
@@ -8669,7 +8670,6 @@ static ssize_t iir2_inp2_gain_store(struct kobject *kobj,
 
 	return count;
 }
-#endif //0
 
 static ssize_t iir2_gain_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
@@ -8707,6 +8707,7 @@ static ssize_t iir2_gain_store(struct kobject *kobj,
 
 	return count;
 }
+#endif //0
 
 static ssize_t hph_pa_enabled_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
@@ -9360,7 +9361,7 @@ static ssize_t anc_delay_store(struct kobject *kobj,
 	anc_delay = uval;
 	return count;
 }
-
+# if 0
 static ssize_t mx_hw_eq_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
@@ -9387,7 +9388,7 @@ static ssize_t mx_hw_eq_store(struct kobject *kobj,
 
 	return count;
 }
-
+#endif
 static struct kobj_attribute headphone_dac_enabled_attribute =
 	__ATTR(headphone_dac_enabled, 0444,
 		headphone_dac_enabled_show,
@@ -9480,6 +9481,7 @@ static struct kobj_attribute speaker_mute_attribute =
 		speaker_mute_show,
 		speaker_mute_store);
 
+#if 0
 static struct kobj_attribute iir1_gain_attribute =
 	__ATTR(iir1_gain, 0644,
 		iir1_gain_show,
@@ -9490,7 +9492,6 @@ static struct kobj_attribute iir2_gain_attribute =
 		iir2_gain_show,
 		iir2_gain_store);
 
-#if 0
 static struct kobj_attribute iir1_inp2_gain_attribute =
 	__ATTR(iir1_inp2_gain, 0644,
 		iir1_inp2_gain_show,
@@ -9603,12 +9604,12 @@ static struct kobj_attribute cnp_bias_attribute =
 		cnp_bias_show,
 		cnp_bias_store);
 #endif
-
+#if 0
 static struct kobj_attribute mx_hw_eq_attribute =
 	__ATTR(mx_hw_eq, 0644,
 		mx_hw_eq_show,
 		mx_hw_eq_store);
-
+#endif
 static struct attribute *sound_control_attrs[] = {
         &headphone_dac_enabled_attribute.attr,
 #ifdef CONFIG_SAMSUNG_JACK_SYSFS
@@ -9629,8 +9630,10 @@ static struct attribute *sound_control_attrs[] = {
 		&hph_poweramp_gain_attribute.attr,
 		&speaker_gain_attribute.attr,
 		&speaker_mute_attribute.attr,
+#if 0
 		&iir1_gain_attribute.attr,
 		&iir2_gain_attribute.attr,
+#endif
 		&uhqa_mode_attribute.attr,
 		&high_perf_mode_attribute.attr,
 		&interpolator_boost_attribute.attr,
@@ -9653,7 +9656,9 @@ static struct attribute *sound_control_attrs[] = {
 		&hph_pa_bias_attribute.attr,
 		&cnp_bias_attribute.attr,
 #endif
+#if 0
 		&mx_hw_eq_attribute.attr,
+#endif
 		NULL,
 };
 
@@ -9838,8 +9843,9 @@ static int taiko_codec_probe(struct snd_soc_codec *codec)
 
 	codec->ignore_pmdown_time = 1;
 	pr_info("Sound Control: Taiko Sound Engine Probe\n");
-	sound_control_codec_ptr = codec->control_data;
-	direct_codec = codec;
+   	sound_control_codec_ptr = codec->control_data;
+   	direct_codec = codec;
+
 	if (codec->name)
 		pr_info("Sound Control: Probing Codec %s\n", codec->name);
 	sound_control_kobj = kobject_create_and_add("sound_control", kernel_kobj);
