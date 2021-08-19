@@ -4283,8 +4283,8 @@ static int taiko_hph_pa_event(struct snd_soc_dapm_widget *w,
 			hpwidget_right = true;
 
 		update_headphone_gain();
-        update_iir_gain();
 #if 0
+        update_iir_gain();
         update_crossfeed_gain();
 #endif
 		if (hph_pa_enabled) {
