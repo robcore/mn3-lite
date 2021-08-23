@@ -1696,7 +1696,7 @@ stat:
 	ttwu_stat(p, cpu, wake_flags);
 
 	if (task_notify_on_migrate(p)) {
-		if ((src_cpu != cpu)
+		if (src_cpu != cpu)
 			notify = 1;
 	}
 
