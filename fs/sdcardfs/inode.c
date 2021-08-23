@@ -871,5 +871,5 @@ const struct inode_operations sdcardfs_main_iops = {
 	.getxattr	= sdcardfs_getxattr,
 	.listxattr	= sdcardfs_listxattr,
 	.removexattr = sdcardfs_removexattr,
-#endif // SDCARD_FS_XATTR
+#endif // SDCARDFS_XATTR
 };
