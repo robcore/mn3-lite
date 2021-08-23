@@ -63,9 +63,6 @@ void get_derived_permission(struct dentry *parent, struct dentry *dentry)
 
 	inherit_derived_state(parent->d_inode, dentry->d_inode);
 
-	//printk(KERN_INFO "sdcardfs: derived: %s, %s, %d\n", parent->d_name.name,
-	//				dentry->d_name.name, parent_info->perm);
-
 	if (sbi->options.derive == DERIVE_NONE) {
 		return;
 	}
