@@ -4446,6 +4446,8 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
 #endif
 	char *orig_data = kstrdup(data, GFP_KERNEL);
 
+	sync_filesystem(sb);
+
 	/* Store the original options */
 	lock_super(sb);
 	old_sb_flags = sb->s_flags;
@@ -4614,9 +4616,10 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
 	unlock_super(sb);
 	if (enable_quota)
 		dquot_resume(sb, -1);
-
-	ext4_msg(sb, KERN_INFO, "re-mounted. Opts: %s", orig_data);
-	kfree(orig_data);
+    if (orig_data) {
+    	ext4_msg(sb, KERN_INFO, "re-mounted. Opts: %s", orig_data);
+        kfree(orig_data);
+    }
 	return 0;
 
 restore_opts:
@@ -4638,7 +4641,8 @@ restore_opts:
 	}
 #endif
 	unlock_super(sb);
-	kfree(orig_data);
+    if (orig_data)
+    	kfree(orig_data);
 	return err;
 }
 

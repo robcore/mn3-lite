@@ -631,7 +631,10 @@ static void __exit fat_destroy_inodecache(void)
 static int fat_remount(struct super_block *sb, int *flags, char *data)
 {
 	struct msdos_sb_info *sbi = MSDOS_SB(sb);
-	*flags |= MS_NODIRATIME | (sbi->options.isvfat ? 0 : MS_NOATIME);
+    *flags |= MS_NODIRATIME | (sbi->options.isvfat ? 0 : MS_NOATIME);
+
+    sync_filesystem(sb);
+
 	return 0;
 }
 
