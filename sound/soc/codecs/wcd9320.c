@@ -753,19 +753,15 @@ static void set_high_perf_mode(bool enable)
 static void update_headphone_gain(void)
 {
 	if (headphone_mute) {
-		lock_sound_control(&sound_control_codec_ptr->core_res, 1);
 		regwrite(TAIKO_A_CDC_RX1_VOL_CTL_B2_CTL, MX_OUTPUT_MUTE);
 		regwrite(TAIKO_A_CDC_RX2_VOL_CTL_B2_CTL, MX_OUTPUT_MUTE);
-		lock_sound_control(&sound_control_codec_ptr->core_res, 0);
 		return;
 	}
 	if (!hpwidget())
 		return;
 
-	lock_sound_control(&sound_control_codec_ptr->core_res, 1);
 	regwrite(TAIKO_A_CDC_RX1_VOL_CTL_B2_CTL, hphl_cached_gain);
 	regwrite(TAIKO_A_CDC_RX2_VOL_CTL_B2_CTL, hphr_cached_gain);
-	lock_sound_control(&sound_control_codec_ptr->core_res, 0);
 }
 /*
 	SOC_SINGLE_S8_TLV("IIR1 INP1 Volume", TAIKO_A_CDC_IIR1_GAIN_B1_CTL, -84,
@@ -779,20 +775,16 @@ static void update_iir_gain(void)
 	if (!hpwidget())
 		return;
 
-	lock_sound_control(&sound_control_codec_ptr->core_res, 1);
 	regwrite(TAIKO_A_CDC_IIR1_GAIN_B1_CTL, iir1_cached_gain);
 	regwrite(TAIKO_A_CDC_IIR2_GAIN_B1_CTL, iir2_cached_gain);
-	lock_sound_control(&sound_control_codec_ptr->core_res, 0);
 }
 
 static void update_crossfeed_gain(void)
 {
 	if (!hpwidget())
 		return;
-	lock_sound_control(&sound_control_codec_ptr->core_res, 1);
 	regwrite(TAIKO_A_CDC_RX4_VOL_CTL_B2_CTL, crossleft_cached_gain);
 	regwrite(TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL, crossright_cached_gain);
-	lock_sound_control(&sound_control_codec_ptr->core_res, 0);
 }
 #endif
 
@@ -855,18 +847,14 @@ static void write_hph_poweramp_regs(void)
 static void update_speaker_gain(void)
 {
 	if (speaker_mute) {
-		lock_sound_control(&sound_control_codec_ptr->core_res, 1);
 		regwrite(TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL, MX_OUTPUT_MUTE);
-		lock_sound_control(&sound_control_codec_ptr->core_res, 0);
 		return;
 	}
 
 	if (!spkwidget_active())
 		return;
 
-	lock_sound_control(&sound_control_codec_ptr->core_res, 1);
 	regwrite(TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL, speaker_cached_gain);
-	lock_sound_control(&sound_control_codec_ptr->core_res, 0);
 }
 
 static void update_wavegen(void)

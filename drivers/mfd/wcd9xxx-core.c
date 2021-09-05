@@ -131,7 +131,7 @@ extern unsigned int ramp_volume;
 #endif
 
 static unsigned int sound_control_override = 0;
-void lock_sound_control(struct wcd9xxx_core_resource *core_res,
+static void lock_sound_control(struct wcd9xxx_core_resource *core_res,
 						unsigned int lockval)
 {
 	struct wcd9xxx *wcd9xxx = (struct wcd9xxx *)core_res->parent;

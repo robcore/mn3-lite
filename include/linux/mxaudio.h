@@ -22,8 +22,6 @@ enum {
 };
 
 extern unsigned int mx_hw_eq;
-void lock_sound_control(struct wcd9xxx_core_resource *core_res,
-						unsigned int lockval);
 extern u8 hphl_cached_gain;
 extern u8 hphr_cached_gain;
 extern u8 speaker_cached_gain;
