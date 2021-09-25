@@ -631,7 +631,9 @@ static unsigned int speaker_hdc = 0;
 unsigned int anc_delay = 1;
 static unsigned int hph_autochopper = 0;
 static unsigned int chopper_bypass = 0;
+#ifdef CONFIG_WAVEGEN_OVERRIDE
 static unsigned int wavegen_override = 0;
+#endif
 /*RMS (Root Mean Squared) Power Detector*/
 static unsigned int interpolator_boost = 0;
 static bool interpolator_enabled;
@@ -857,6 +859,7 @@ static void update_speaker_gain(void)
 	regwrite(TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL, speaker_cached_gain);
 }
 
+#ifdef CONFIG_WAVEGEN_OVERRIDE
 static void update_wavegen(void)
 {
         if (wavegen_override) {
@@ -871,6 +874,7 @@ static void update_wavegen(void)
     		regwrite(TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x2A);
         }
 }
+#endif
 
 /*
 	__________________________Bypass Switch_______________________
@@ -1054,18 +1058,23 @@ TAIKO_A_RX_HPH_CHOP_CTL 0x1A5
 
 static void write_chopper(void)
 {
-
-    if (!hpwidget() || chopper_bypass) {
+    if (hpwidget_any()) {
+        if (uhqa_mode && !chopper_bypass) {
+            mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x80, 0x80);
+            mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x20, 0x00);
+        } else if (chopper_bypass) {
+            mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x20, 0x20);
+            mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x80, 0x00);
+        } else {
+            mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x80, 0x80);
+            mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x20, 0x20);
+        }
+    } else {
         mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x20, 0x20);
         mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x80, 0x00);
-    } else if (uhqa_mode) {
-        mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x80, 0x80);
-        mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x20, 0x00);
-    } else {
-        mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x80, 0x80);
-        mx_update_bits(TAIKO_A_RX_HPH_CHOP_CTL, 0x20, 0x20);
     }
 }
+
 #ifdef CONFIG_WCD_BIAS_ACCESS
 static void update_bias(void)
 {
@@ -1513,6 +1522,7 @@ static int taiko_set_compander(struct snd_kcontrol *kcontrol,
 	if (hph_pa_enabled && comp == COMPANDER_1) {
 		/* Wavegen to 20 msec */
 		taiko->comp_enabled[comp] = 0;
+#ifdef CONFIG_WAVEGEN_OVERRIDE
         if (wavegen_override) {
     		/* Wavegen to 20 msec */
     		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDB);
@@ -1524,12 +1534,12 @@ static int taiko_set_compander(struct snd_kcontrol *kcontrol,
     		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_TIME, 0x15);
     		snd_soc_write(codec, TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x2A);
         }
-
-		/* Disable CHOPPER block */
-        snd_soc_update_bits(codec,
-            TAIKO_A_RX_HPH_CHOP_CTL, 0x20, 0x20);
-		snd_soc_update_bits(codec,
-			TAIKO_A_RX_HPH_CHOP_CTL, 0x80, 0x00);
+#else
+   		/* Wavegen to 5 msec */
+   		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDA);
+   		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_TIME, 0x15);
+   		snd_soc_write(codec, TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x2A);
+#endif
         write_chopper();
 		snd_soc_write(codec, TAIKO_A_NCP_DTEST, 0x10);
 		write_hph_poweramp_regs();
@@ -1540,7 +1550,7 @@ static int taiko_set_compander(struct snd_kcontrol *kcontrol,
 
 	if (comp == COMPANDER_1 &&
 			taiko->comp_enabled[comp] == 1) {
-
+#ifdef CONFIG_WAVEGEN_OVERRIDE
         if (wavegen_override) {
     		/* Wavegen to 20 msec */
     		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDB);
@@ -1552,11 +1562,12 @@ static int taiko_set_compander(struct snd_kcontrol *kcontrol,
     		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_TIME, 0x15);
     		snd_soc_write(codec, TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x2A);
         }
-		/* Enable Chopper */
-		if (!chopper_bypass)
-			snd_soc_update_bits(codec,
-				TAIKO_A_RX_HPH_CHOP_CTL, 0x80, 0x80);
-
+#else
+   		/* Wavegen to 5 msec */
+   		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDA);
+   		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_TIME, 0x15);
+   		snd_soc_write(codec, TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x2A);
+#endif
         write_chopper();
 		snd_soc_write(codec, TAIKO_A_NCP_DTEST, 0x20);
 
@@ -1570,12 +1581,6 @@ static int taiko_set_compander(struct snd_kcontrol *kcontrol,
 		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDB);
 		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_TIME, 0x58);
 		snd_soc_write(codec, TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x1A);
-
-		/* Disable CHOPPER block */
-        snd_soc_update_bits(codec,
-            TAIKO_A_RX_HPH_CHOP_CTL, 0x20, 0x20);
-		snd_soc_update_bits(codec,
-			TAIKO_A_RX_HPH_CHOP_CTL, 0x80, 0x00);
 
         write_chopper();
 		snd_soc_write(codec, TAIKO_A_NCP_DTEST, 0x10);
@@ -8378,6 +8383,7 @@ static ssize_t autochopper_raw_show(struct kobject *kobj,
 	return sprintf(buf, "Autochopper:%d\n", regread(TAIKO_A_RX_HPH_AUTO_CHOP));
 }
 
+#ifdef CONFIG_WAVEGEN_OVERRIDE
 static ssize_t wavegen_override_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
@@ -8402,6 +8408,7 @@ static ssize_t wavegen_override_store(struct kobject *kobj,
     }
 	return count;
 }
+#endif
 
 static ssize_t autochopper_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
@@ -9422,12 +9429,12 @@ static struct kobj_attribute autochopper_raw_attribute =
 	__ATTR(autochopper_raw, 0644,
 		autochopper_raw_show,
 		NULL);
-
+#ifdef CONFIG_WAVEGEN_OVERRIDE
 static struct kobj_attribute wavegen_override_attribute =
 	__ATTR(wavegen_override, 0644,
 		wavegen_override_show,
 		wavegen_override_store);
-
+#endif
 static struct kobj_attribute autochopper_attribute =
 	__ATTR(autochopper, 0644,
 		autochopper_show,
@@ -9611,7 +9618,9 @@ static struct attribute *sound_control_attrs[] = {
         &class_h_control_attribute.attr,
 		&chopper_attribute.attr,
 		&autochopper_raw_attribute.attr,
+#ifdef CONFIG_WAVEGEN_OVERRIDE
         &wavegen_override_attribute.attr,
+#endif
 		&autochopper_attribute.attr,
 		&chopper_bypass_attribute.attr,
 		&headphone_gain_attribute.attr,

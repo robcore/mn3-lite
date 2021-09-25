@@ -328,6 +328,12 @@ config WCD_BIAS_ACCESS
 	help
 	Change hph and cnp bias from user space.
 
+config WAVEGEN_OVERRIDE
+	bool "User Space wavegen override"
+	depends on SND_SOC_WCD9320
+	help
+	Change wavegen properties from user space.
+
 config SND_SOC_WCD9306
         tristate
 
