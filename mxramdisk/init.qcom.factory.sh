@@ -139,8 +139,8 @@
     chmod -h 0664 /sys/module/lowmemorykiller/parameters/minfree
 
     # Tweak background writeout
-    echo 200 > /proc/sys/vm/dirty_expire_centisecs
-    echo 5 > /proc/sys/vm/dirty_background_ratio
+    #echo 30 > /proc/sys/vm/dirty_expire_centisecs
+    #echo 5 > /proc/sys/vm/dirty_background_ratio
 
     # Permissions for System Server and daemons.
     chown -h radio.system /sys/android_power/state

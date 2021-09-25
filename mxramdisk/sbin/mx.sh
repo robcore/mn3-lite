@@ -192,6 +192,10 @@ echo 0 > /sys/devices/platform/kcal_ctrl.0/kcal_enable
 #fi
 
 #echo 0 > /sys/devices/virtual/lcd/panel/temperature
+
+echo '60' > /proc/sys/vm/dirty_writeback_centisecs
+echo '90' > /proc/sys/vm/dirty_expire_centisecs
+
 echo "[MACHIN3X] mx.sh Complete" | tee /dev/kmsg
 echo "[MACHIN3X] Running Init.d" | tee /dev/kmsg
 
