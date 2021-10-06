@@ -1230,6 +1230,8 @@ static int spkr_drv_wrnd_param_set(const char *val,
 	}
 
 	codec = priv->codec;
+    if (!codec)
+        return 0;
 	mutex_lock(&codec->mutex);
 	old = spkr_drv_wrnd;
 	ret = param_set_int(val, kp);
