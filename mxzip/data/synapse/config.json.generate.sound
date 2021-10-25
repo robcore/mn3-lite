@@ -328,25 +328,6 @@ busybox cat << CTAG
                 height: 1
             }},
             { STitleBar:{
-                title:"Click and Pop"
-            }},
-            { SDescription:{
-                description:"Headphone Click and Pop Detection Settings"
-            }},
-            { SLiveLabel:{
-                refresh:1000,
-                action:"soundcontrol headphone_audio_active CNP"
-            }},
-            { SCheckBox:{
-                label:"Wavegen Override",
-                description:"Prevent the wave generator from switching to 20ms from 5ms when headphones are used",
-                default:$(busybox cat /sys/kernel/sound_control/wavegen_override),
-                action:"soundcontrol wavegen_override"
-            }},
-            { SSpacer:{
-                height: 1
-            }},
-            { STitleBar:{
                 title:"Compander 1 Values"
             }},
             { SDescription:{
