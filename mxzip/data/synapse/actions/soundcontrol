@@ -330,21 +330,6 @@ then
     else
         busybox cat /sys/kernel/sound_control/compander_gain_boost
     fi
-elif [ "$1" = "wavegen_override" ]
-then
-    CURVAL="$(busybox cat /sys/kernel/sound_control/wavegen_override)"
-    if [ -n "$2" ]
-    then
-        if [ "$2" = "$CURVAL" ]
-        then
-            busybox cat /sys/kernel/sound_control/wavegen_override
-        else
-            busybox echo "$2" > /sys/kernel/sound_control/wavegen_override
-            busybox cat /sys/kernel/sound_control/wavegen_override
-        fi
-    else
-        busybox cat /sys/kernel/sound_control/wavegen_override
-    fi
 elif [ "$1" = "headphone_hdc" ]
 then
     CURVAL="$(busybox cat /sys/kernel/sound_control/headphone_hdc)"
@@ -555,36 +540,6 @@ then
     else
         busybox cat /sys/kernel/sound_control/rms_meter_resamp_fact
     fi
-#elif [ "$1" = "hph_pa_bias" ]
-#then
-#    CURVAL="$(busybox cat /sys/kernel/sound_control/hph_pa_bias)"
-#    if [ -n "$2" ]
-#    then
-#        if [ "$2" = "$CURVAL" ]
-#        then
-#            busybox cat /sys/kernel/sound_control/hph_pa_bias
-#        else
-#            busybox echo "$2" > /sys/kernel/sound_control/hph_pa_bias
-#            busybox cat /sys/kernel/sound_control/hph_pa_bias
-#        fi
-#    else
-#        busybox cat /sys/kernel/sound_control/hph_pa_bias
-#    fi
-#elif [ "$1" = "cnp_bias" ]
-#then
-#    CURVAL="$(busybox cat /sys/kernel/sound_control/cnp_bias)"
-#    if [ -n "$2" ]
-#    then
-#        if [ "$2" = "$CURVAL" ]
-#        then
-#            busybox cat /sys/kernel/sound_control/cnp_bias
-#        else
-#            busybox echo "$2" > /sys/kernel/sound_control/cnp_bias
-#            busybox cat /sys/kernel/sound_control/cnp_bias
-#        fi
-#    else
-#        busybox cat /sys/kernel/sound_control/cnp_bias
-#    fi
 elif [ "$1" = "compander1" ]
 then
     while read -r LINE; 
