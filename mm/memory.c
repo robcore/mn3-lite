@@ -97,13 +97,14 @@ EXPORT_SYMBOL(high_memory);
  * ( When CONFIG_COMPAT_BRK=y we exclude brk from randomization,
  *   as ancient (libc5 based) binaries can segfault. )
  */
-int randomize_va_space __read_mostly =
+int randomize_va_space __read_mostly = 0;
+#if 0
 #ifdef CONFIG_COMPAT_BRK
 					1;
 #else
 					2;
 #endif
-
+#endif
 static int __init disable_randmaps(char *s)
 {
 	randomize_va_space = 0;
