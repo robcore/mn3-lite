@@ -546,7 +546,7 @@ static unsigned short tx_digital_gain_reg[] = {
 };
 
 /* MX Audio */
-#ifdef CONFIG_MXSOUND_ENGINE
+#ifdef CONFIG_MXAUDIO_ENGINE
 static struct wcd9xxx *sound_control_codec_ptr;
 static struct snd_soc_codec *direct_codec;
 static atomic_t kp_taiko_priv;
@@ -594,10 +594,6 @@ static unsigned int compander_gain_boost = 0;
 static u32 sc_peak_det_timeout = 0x09;
 static u32 sc_rms_meter_div_fact = 0x0B;
 static u32 sc_rms_meter_resamp_fact = 0x28;
-#ifdef CONFIG_WCD_BIAS_ACCESS
-static u8 hph_pa_bias = 0x7A;
-static u8 cnp_bias = 0x8A;
-#endif
 static unsigned int headphone_hdc = 0;
 static unsigned int speaker_hdc = 0;
 
@@ -609,9 +605,6 @@ static unsigned int speaker_hdc = 0;
 unsigned int anc_delay = 1;
 static unsigned int hph_autochopper = 0;
 static unsigned int chopper_bypass = 0;
-#ifdef CONFIG_WAVEGEN_OVERRIDE
-static unsigned int wavegen_override = 0;
-#endif
 /*RMS (Root Mean Squared) Power Detector*/
 static unsigned int interpolator_boost = 0;
 static bool interpolator_enabled;
@@ -701,12 +694,6 @@ static bool hpwidget(void)
     return false;
 }
 
-#if 0
-static bool poweramp_active(void)
-{
-	return (hph_pa_enabled && hpwidget());
-}
-#endif
 static bool hpwidget_any(void)
 {
     return (regread(TAIKO_A_RX_HPH_L_STATUS) == PA_STAT_ON ||
@@ -749,24 +736,6 @@ static void update_headphone_gain(void)
 	SOC_SINGLE_S8_TLV("IIR2 INP1 Volume", TAIKO_A_CDC_IIR2_GAIN_B1_CTL, -84,
 		40, digital_gain),
 */
-#if 0
-static void update_iir_gain(void)
-{
-	if (!hpwidget())
-		return;
-
-	regwrite(TAIKO_A_CDC_IIR1_GAIN_B1_CTL, iir1_cached_gain);
-	regwrite(TAIKO_A_CDC_IIR2_GAIN_B1_CTL, iir2_cached_gain);
-}
-
-static void update_crossfeed_gain(void)
-{
-	if (!hpwidget())
-		return;
-	regwrite(TAIKO_A_CDC_RX4_VOL_CTL_B2_CTL, crossleft_cached_gain);
-	regwrite(TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL, crossright_cached_gain);
-}
-#endif
 
 static int read_hph_poweramp_gain(unsigned short reg)
 {
@@ -836,23 +805,6 @@ static void update_speaker_gain(void)
 
 	regwrite(TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL, speaker_cached_gain);
 }
-
-#ifdef CONFIG_WAVEGEN_OVERRIDE
-static void update_wavegen(void)
-{
-        if (wavegen_override) {
-    		/* Wavegen to 20 msec */
-    		regwrite(TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDB);
-    		regwrite(TAIKO_A_RX_HPH_CNP_WG_TIME, 0x58);
-    		regwrite(TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x1A);
-        } else {
-    		/* Wavegen to 5 msec */
-    		regwrite(TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDA);
-    		regwrite(TAIKO_A_RX_HPH_CNP_WG_TIME, 0x15);
-    		regwrite(TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x2A);
-        }
-}
-#endif
 
 /*
 	__________________________Bypass Switch_______________________
@@ -1053,18 +1005,6 @@ static void write_chopper(void)
     }
 }
 
-#ifdef CONFIG_WCD_BIAS_ACCESS
-static void update_bias(void)
-{
-    if (!hpwidget_any()) {
-       	mx_update_bits(TAIKO_A_RX_HPH_BIAS_PA, 0xff, hph_pa_bias);
-        mx_update_bits(TAIKO_A_RX_HPH_BIAS_CNP, 0xff, cnp_bias);
-    }
-}
-#else
-static void update_bias(void) {}
-#endif
-
 static inline void update_interpolator(void)
 {
     regwrite(TAIKO_A_CDC_COMP1_B3_CTL, 1);
@@ -1158,25 +1098,7 @@ enum {
 	BAND_MAX = 5,
 };
  */
-#if 0
-static int read_iir_enable(unsigned short reg, unsigned int iir_slot, unsigned int band_slot)
-{
-	return ((regread((TAIKO_A_CDC_IIR1_CTL + 16 * iir_slot)) &
-		(1 << band_slot)) != 0);
-}
 
-static void write_iir_enable(unsigned short reg, unsigned int iir_slot, unsigned int band_slot,
-			int value)
-{
-	if (value < 0)
-		value = 0;
-	if (value > 1)
-		value = 1;
-	/* Mask first 5 bits, 6-8 are reserved */
-	mx_update_bits((TAIKO_A_CDC_IIR1_CTL + 16 * iir_slot),
-		(1 << band_slot), (value << band_slot));
-}
-#endif
 static void update_control_regs(void)
 {
 	write_hpf_cutoff(TAIKO_A_CDC_RX1_B4_CTL);
@@ -1189,7 +1111,7 @@ static void update_control_regs(void)
     write_autochopper(hph_autochopper);
 }
 
-#endif /*CONFIG_MXSOUND_ENGINE*/
+#endif /*CONFIG_MXAUDIO_ENGINE*/
 
 static int spkr_drv_wrnd = 1;
 
@@ -1504,24 +1426,10 @@ static int taiko_set_compander(struct snd_kcontrol *kcontrol,
 	if (hph_pa_enabled && comp == COMPANDER_1) {
 		/* Wavegen to 20 msec */
 		taiko->comp_enabled[comp] = 0;
-#ifdef CONFIG_WAVEGEN_OVERRIDE
-        if (wavegen_override) {
-    		/* Wavegen to 20 msec */
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDB);
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_TIME, 0x58);
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x1A);
-        } else {
-    		/* Wavegen to 5 msec */
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDA);
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_TIME, 0x15);
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x2A);
-        }
-#else
    		/* Wavegen to 5 msec */
    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDA);
    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_TIME, 0x15);
    		snd_soc_write(codec, TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x2A);
-#endif
         write_chopper();
 		snd_soc_write(codec, TAIKO_A_NCP_DTEST, 0x10);
 		write_hph_poweramp_regs();
@@ -1532,24 +1440,10 @@ static int taiko_set_compander(struct snd_kcontrol *kcontrol,
 
 	if (comp == COMPANDER_1 &&
 			taiko->comp_enabled[comp] == 1) {
-#ifdef CONFIG_WAVEGEN_OVERRIDE
-        if (wavegen_override) {
-    		/* Wavegen to 20 msec */
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDB);
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_TIME, 0x58);
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x1A);
-        } else {
-    		/* Wavegen to 5 msec */
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDA);
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_TIME, 0x15);
-    		snd_soc_write(codec, TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x2A);
-        }
-#else
    		/* Wavegen to 5 msec */
    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_CTL, 0xDA);
    		snd_soc_write(codec, TAIKO_A_RX_HPH_CNP_WG_TIME, 0x15);
    		snd_soc_write(codec, TAIKO_A_RX_HPH_BIAS_WG_OCP, 0x2A);
-#endif
         write_chopper();
 		snd_soc_write(codec, TAIKO_A_NCP_DTEST, 0x20);
 
@@ -1865,13 +1759,13 @@ static const struct soc_enum cf_dec9_enum =
 
 static const struct soc_enum cf_dec10_enum =
 	SOC_ENUM_SINGLE(TAIKO_A_CDC_TX10_MUX_CTL, 4, 3, cf_text);
-#if 0
+
 static const struct soc_enum cf_rxmix1_enum =
 	SOC_ENUM_SINGLE(TAIKO_A_CDC_RX1_B4_CTL, 0, 3, cf_text);
 
 static const struct soc_enum cf_rxmix2_enum =
 	SOC_ENUM_SINGLE(TAIKO_A_CDC_RX2_B4_CTL, 0, 3, cf_text);
-#endif
+
 static const struct soc_enum cf_rxmix3_enum =
 	SOC_ENUM_SINGLE(TAIKO_A_CDC_RX3_B4_CTL, 0, 3, cf_text);
 
@@ -1883,10 +1777,10 @@ static const struct soc_enum cf_rxmix5_enum =
 ;
 static const struct soc_enum cf_rxmix6_enum =
 	SOC_ENUM_SINGLE(TAIKO_A_CDC_RX6_B4_CTL, 0, 3, cf_text);
-#if 0
+
 static const struct soc_enum cf_rxmix7_enum =
 	SOC_ENUM_SINGLE(TAIKO_A_CDC_RX7_B4_CTL, 0, 3, cf_text);
-#endif
+
 static const char * const class_h_dsm_text[] = {
 	"ZERO", "DSM_HPHL_RX1", "DSM_SPKR_RX7"
 };
@@ -4258,10 +4152,6 @@ static int taiko_hph_pa_event(struct snd_soc_dapm_widget *w,
 			hpwidget_right = true;
 
 		update_headphone_gain();
-#if 0
-        update_iir_gain();
-        update_crossfeed_gain();
-#endif
 		if (hph_pa_enabled) {
 			if (w->shift == 4 || w->shift == 5)
 				write_hph_poweramp_regs();
@@ -6674,25 +6564,6 @@ static int taiko_codec_enable_anc_ear(struct snd_soc_dapm_widget *w,
 	}
 	return ret;
 }
-#if 0
-static int taiko_codec_set_iir_gain(struct snd_soc_dapm_widget *w,
-	struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_codec *codec = w->codec;
-	int value = 0;
-
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMU:
-		value = snd_soc_read(codec, TAIKO_A_CDC_IIR1_GAIN_B1_CTL);
-		snd_soc_write(codec, TAIKO_A_CDC_IIR1_GAIN_B1_CTL, value);
-		break;
-	default:
-		pr_debug("%s: event = %d not expected\n", __func__, event);
-		break;
-	}
-	return 0;
-}
-#endif
 
 /* Todo: Have seperate dapm widgets for I2S and Slimbus.
  * Might Need to have callbacks registered only for slimbus
@@ -7881,7 +7752,6 @@ static int wcd9xxx_prepare_static_pa(struct wcd9xxx_mbhc *mbhc,
 	}
 	pr_debug("%s: PAs are prepared\n", __func__);
 bypass:
-    update_bias();
 	update_control_regs();
     write_hph_poweramp_regs();	
 	return 0;
@@ -8136,7 +8006,6 @@ static int taiko_post_reset_cb(struct wcd9xxx *wcd9xxx)
 		taiko->dai[count].bus_down_in_recovery = true;
 
 	mutex_unlock(&codec->mutex);
-    update_bias();
 	update_control_regs();
 	return ret;
 }
@@ -8365,33 +8234,6 @@ static ssize_t autochopper_raw_show(struct kobject *kobj,
 	return sprintf(buf, "Autochopper:%d\n", regread(TAIKO_A_RX_HPH_AUTO_CHOP));
 }
 
-#ifdef CONFIG_WAVEGEN_OVERRIDE
-static ssize_t wavegen_override_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", wavegen_override);
-}
-
-static ssize_t wavegen_override_store(struct kobject *kobj,
-			   struct kobj_attribute *attr, const char *buf, size_t count)
-{
-	int uval;
-
-	sscanf(buf, "%d", &uval);
-
-	if (uval < 0)
-		uval = 0;
-	if (uval > 1)
-		uval = 1;
-
-	wavegen_override = uval;
-    if (hpwidget()) {
-        update_wavegen();
-    }
-	return count;
-}
-#endif
-
 static ssize_t autochopper_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
@@ -8535,157 +8377,6 @@ static ssize_t headphone_mute_store(struct kobject *kobj,
 	SOC_SINGLE_S8_TLV("IIR2 INP1 Volume", TAIKO_A_CDC_IIR2_GAIN_B1_CTL, -84,
 		40, digital_gain),
 */
-
-#if 0
-static ssize_t iir1_gain_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	int iirval, tempval;
-
-	iirval = show_sound_value(TAIKO_A_CDC_IIR1_GAIN_B1_CTL);
-	if (iirval == -84) {
-		tempval = iir1_cached_gain;
-
-		if ((tempval > 171) && (tempval < 256))
-			tempval -= 256;
-	} else {
-		tempval = iirval;
-	}
-
-	return sprintf(buf, "%d\n", tempval);
-}
-
-static ssize_t iir1_gain_store(struct kobject *kobj,
-			   struct kobj_attribute *attr, const char *buf, size_t count)
-{
-	int iirinput;
-
-	sscanf(buf, "%d", &iirinput);
-
-	iirinput = clamp_val(iirinput, -84, 40);
-
-	if (iirinput < 0)
-		iir1_cached_gain = (iirinput + 256);
-	else
-		iir1_cached_gain = iirinput;
-
-	update_iir_gain();
-
-	return count;
-}
-#endif
-#if 0
-static ssize_t iir1_inp2_gain_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	int iirval, tempval;
-
-	iirval = show_sound_value(TAIKO_A_CDC_IIR1_GAIN_B2_CTL);
-	if (iirval == -84) {
-		tempval = iir1_inp2_cached_gain;
-
-		if ((tempval > 171) && (tempval < 256))
-			tempval -= 256;
-	} else {
-		tempval = iirval;
-	}
-
-	return sprintf(buf, "%d\n", tempval);
-}
-
-static ssize_t iir1_inp2_gain_store(struct kobject *kobj,
-			   struct kobj_attribute *attr, const char *buf, size_t count)
-{
-	int iirinput;
-
-	sscanf(buf, "%d", &iirinput);
-
-	iirinput = clamp_val(iirinput, -84, 40);
-
-	if (iirinput < 0)
-		iir1_inp2_cached_gain = (iirinput + 256);
-	else
-		iir1_inp2_cached_gain = iirinput;
-
-	update_iir_gain();
-
-	return count;
-}
-
-static ssize_t iir2_inp2_gain_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	int iirval, tempval;
-
-	iirval = show_sound_value(TAIKO_A_CDC_IIR2_GAIN_B2_CTL);
-	if (iirval == -84) {
-		tempval = iir2_inp2_cached_gain;
-
-		if ((tempval > 171) && (tempval < 256))
-			tempval -= 256;
-	} else {
-		tempval = iirval;
-	}
-
-	return sprintf(buf, "%d\n", tempval);
-}
-
-static ssize_t iir2_inp2_gain_store(struct kobject *kobj,
-			   struct kobj_attribute *attr, const char *buf, size_t count)
-{
-	int iirinput;
-
-	sscanf(buf, "%d", &iirinput);
-
-	iirinput = clamp_val(iirinput, -84, 40);
-
-	if (iirinput < 0)
-		iir2_inp2_cached_gain = (iirinput + 256);
-	else
-		iir2_inp2_cached_gain = iirinput;
-
-	update_iir_gain();
-
-	return count;
-}
-
-static ssize_t iir2_gain_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	int iirval, tempval;
-
-	iirval = show_sound_value(TAIKO_A_CDC_IIR2_GAIN_B1_CTL);
-	if (iirval == -84) {
-		tempval = iir2_cached_gain;
-
-		if ((tempval > 171) && (tempval < 256))
-			tempval -= 256;
-	} else {
-		tempval = iirval;
-	}
-
-	return sprintf(buf, "%d\n", tempval);
-}
-
-static ssize_t iir2_gain_store(struct kobject *kobj,
-			   struct kobj_attribute *attr, const char *buf, size_t count)
-{
-	int iirinput;
-
-	sscanf(buf, "%d", &iirinput);
-
-	iirinput = clamp_val(iirinput, -84, 40);
-
-	if (iirinput < 0)
-		iir2_cached_gain = (iirinput + 256);
-	else
-		iir2_cached_gain = iirinput;
-
-	update_iir_gain();
-
-	return count;
-}
-#endif //0
 
 static ssize_t hph_pa_enabled_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
@@ -9253,71 +8944,6 @@ static ssize_t rms_meter_resamp_fact_store(struct kobject *kobj,
 	return count;
 }
 
-#ifdef CONFIG_WCD_BIAS_ACCESS
-static ssize_t hph_pa_bias_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", regread(TAIKO_A_RX_HPH_BIAS_PA));
-}
-
-static ssize_t hph_pa_bias_store(struct kobject *kobj,
-			   struct kobj_attribute *attr, const char *buf, size_t count)
-{
-	int uval;
-
-	sscanf(buf, "%d", &uval);
-
-	if (uval < 85)
-		uval = 85;
-	if (uval > 170)
-		uval = 170;
-#ifdef CONFIG_SAMSUNG_JACK_SYSFS
-    if (sec_jacked() || hpwidget_any() || \
-        spkwidget_active())
-#else
-    if (hpwidget_any() || spkwidget_active())
-#endif
-        return count;
-
-	hph_pa_bias = uval;
-
-    update_bias();
-
-	return count;
-}
-
-static ssize_t cnp_bias_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", regread(TAIKO_A_RX_HPH_BIAS_CNP));
-}
-
-static ssize_t cnp_bias_store(struct kobject *kobj,
-			   struct kobj_attribute *attr, const char *buf, size_t count)
-{
-	int uval;
-
-	sscanf(buf, "%d", &uval);
-
-	if (uval < 85)
-		uval = 85;
-	if (uval > 170)
-		uval = 170;
-#ifdef CONFIG_SAMSUNG_JACK_SYSFS
-    if (sec_jacked() || hpwidget_any() || \
-        spkwidget_active())
-#else
-    if (hpwidget_any() || spkwidget_active())
-#endif
-        return count;
-
-	cnp_bias = uval;
-
-    update_bias();
-
-	return count;
-}
-#endif
 static ssize_t anc_delay_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
@@ -9339,34 +8965,7 @@ static ssize_t anc_delay_store(struct kobject *kobj,
 	anc_delay = uval;
 	return count;
 }
-# if 0
-static ssize_t mx_hw_eq_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", mx_hw_eq);
-}
 
-static ssize_t mx_hw_eq_store(struct kobject *kobj,
-			   struct kobj_attribute *attr, const char *buf, size_t count)
-{
-	int uval;
-
-	sscanf(buf, "%d", &uval);
-
-	if (uval < HWEQ_OFF)
-		uval = HWEQ_OFF;
-	if (uval > HWEQ_ON)
-		uval = HWEQ_ON;
-
-    if (hpwidget_any() ||
-        spkwidget_active())
-        return count;
-
-	mx_hw_eq = uval;
-
-	return count;
-}
-#endif
 static struct kobj_attribute headphone_dac_enabled_attribute =
 	__ATTR(headphone_dac_enabled, 0444,
 		headphone_dac_enabled_show,
@@ -9411,12 +9010,7 @@ static struct kobj_attribute autochopper_raw_attribute =
 	__ATTR(autochopper_raw, 0644,
 		autochopper_raw_show,
 		NULL);
-#ifdef CONFIG_WAVEGEN_OVERRIDE
-static struct kobj_attribute wavegen_override_attribute =
-	__ATTR(wavegen_override, 0644,
-		wavegen_override_show,
-		wavegen_override_store);
-#endif
+
 static struct kobj_attribute autochopper_attribute =
 	__ATTR(autochopper, 0644,
 		autochopper_show,
@@ -9437,13 +9031,6 @@ static struct kobj_attribute headphone_mute_attribute =
 		headphone_mute_show,
 		headphone_mute_store);
 
-#if 0
-static struct kobj_attribute crossfeed_gain_attribute =
-	__ATTR(crossfeed_gain, 0644,
-		crossfeed_gain_show,
-		crossfeed_gain_store);
-#endif
-
 static struct kobj_attribute hph_poweramp_gain_attribute =
 	__ATTR(hph_poweramp_gain, 0644,
 		hph_poweramp_gain_show,
@@ -9458,28 +9045,6 @@ static struct kobj_attribute speaker_mute_attribute =
 	__ATTR(speaker_mute, 0644,
 		speaker_mute_show,
 		speaker_mute_store);
-
-#if 0
-static struct kobj_attribute iir1_gain_attribute =
-	__ATTR(iir1_gain, 0644,
-		iir1_gain_show,
-		iir1_gain_store);
-
-static struct kobj_attribute iir2_gain_attribute =
-	__ATTR(iir2_gain, 0644,
-		iir2_gain_show,
-		iir2_gain_store);
-
-static struct kobj_attribute iir1_inp2_gain_attribute =
-	__ATTR(iir1_inp2_gain, 0644,
-		iir1_inp2_gain_show,
-		iir1_inp2_gain_store);
-
-static struct kobj_attribute iir2_inp2_gain_attribute =
-	__ATTR(iir2_inp2_gain, 0644,
-		iir2_inp2_gain_show,
-		iir2_inp2_gain_store);
-#endif //0
 
 static struct kobj_attribute uhqa_mode_attribute =
 	__ATTR(uhqa_mode, 0644,
@@ -9571,23 +9136,6 @@ static struct kobj_attribute rms_meter_resamp_fact_attribute =
 		rms_meter_resamp_fact_show,
 		rms_meter_resamp_fact_store);
 
-#ifdef CONFIG_WCD_BIAS_ACCESS
-static struct kobj_attribute hph_pa_bias_attribute =
-	__ATTR(hph_pa_bias, 0644,
-		hph_pa_bias_show,
-		hph_pa_bias_store);
-
-static struct kobj_attribute cnp_bias_attribute =
-	__ATTR(cnp_bias, 0644,
-		cnp_bias_show,
-		cnp_bias_store);
-#endif
-#if 0
-static struct kobj_attribute mx_hw_eq_attribute =
-	__ATTR(mx_hw_eq, 0644,
-		mx_hw_eq_show,
-		mx_hw_eq_store);
-#endif
 static struct attribute *sound_control_attrs[] = {
         &headphone_dac_enabled_attribute.attr,
 #ifdef CONFIG_SAMSUNG_JACK_SYSFS
@@ -9600,9 +9148,6 @@ static struct attribute *sound_control_attrs[] = {
         &class_h_control_attribute.attr,
 		&chopper_attribute.attr,
 		&autochopper_raw_attribute.attr,
-#ifdef CONFIG_WAVEGEN_OVERRIDE
-        &wavegen_override_attribute.attr,
-#endif
 		&autochopper_attribute.attr,
 		&chopper_bypass_attribute.attr,
 		&headphone_gain_attribute.attr,
@@ -9610,10 +9155,6 @@ static struct attribute *sound_control_attrs[] = {
 		&hph_poweramp_gain_attribute.attr,
 		&speaker_gain_attribute.attr,
 		&speaker_mute_attribute.attr,
-#if 0
-		&iir1_gain_attribute.attr,
-		&iir2_gain_attribute.attr,
-#endif
 		&uhqa_mode_attribute.attr,
 		&high_perf_mode_attribute.attr,
 		&interpolator_boost_attribute.attr,
@@ -9632,13 +9173,6 @@ static struct attribute *sound_control_attrs[] = {
 		&peak_det_timeout_attribute.attr,
 		&rms_meter_div_fact_attribute.attr,
 		&rms_meter_resamp_fact_attribute.attr,
-#ifdef CONFIG_WCD_BIAS_ACCESS
-		&hph_pa_bias_attribute.attr,
-		&cnp_bias_attribute.attr,
-#endif
-#if 0
-		&mx_hw_eq_attribute.attr,
-#endif
 		NULL,
 };
 
@@ -9841,7 +9375,6 @@ static int taiko_codec_probe(struct snd_soc_codec *codec)
 
     wake_lock_init(&spk_playback_wake_lock, WAKE_LOCK_SUSPEND, "mx_spk_playback");
     wake_lock_init(&hph_playback_wake_lock, WAKE_LOCK_SUSPEND, "mx_hph_playback");
-    update_bias();
 	update_control_regs();
 	return ret;
 

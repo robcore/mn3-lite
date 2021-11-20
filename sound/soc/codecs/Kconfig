@@ -322,23 +322,11 @@ config SND_SOC_CS8427
 config SND_SOC_WCD9320
         tristate
 
-config WCD_BIAS_ACCESS
-	bool "User Space bias access"
-	depends on SND_SOC_WCD9320
-	help
-	Change hph and cnp bias from user space.
-
-config MXSOUND_ENGINE
-	bool "User Space wavegen override"
+config MXAUDIO_ENGINE
+	bool "mxaudio api"
 	depends on SND_SOC_WCD9320
 	help
 	Build an overarching sound control api for rooted devices.
-
-config WAVEGEN_OVERRIDE
-	bool "User Space wavegen override"
-	depends on SND_SOC_WCD9320 && MXSOUND_ENGINE
-	help
-	Change wavegen properties from user space.
 
 config SND_SOC_WCD9306
         tristate
