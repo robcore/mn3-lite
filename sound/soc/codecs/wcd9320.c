@@ -53,7 +53,6 @@
 #endif
 
 #if defined(CONFIG_SND_SOC_ES705)
-
 #define CONFIG_SND_SOC_ESXXX
 #define REMOTE_ROUTE_ENABLE_CB  es705_remote_route_enable
 #define SLIM_GET_CHANNEL_MAP_CB es705_slim_get_channel_map
@@ -81,14 +80,6 @@
 #define TAIKO_WG_TIME_FACTOR_US	240
 #define ZDET_RAMP_WAIT_US 18000
 
-static struct wcd9xxx *sound_control_codec_ptr;
-static struct snd_soc_codec *direct_codec;
-static atomic_t kp_taiko_priv;
-struct wake_lock hph_playback_wake_lock;
-struct wake_lock spk_playback_wake_lock;
-#ifdef CONFIG_SAMSUNG_JACK_SYSFS
-extern int secjack_state;
-#endif
 static struct afe_param_slimbus_slave_port_cfg taiko_slimbus_slave_port_cfg = {
 	.minor_version = 1,
 	.slimbus_dev_id = AFE_SLIMBUS_DEVICE_1,
@@ -555,6 +546,15 @@ static unsigned short tx_digital_gain_reg[] = {
 };
 
 /* MX Audio */
+#ifdef CONFIG_MXSOUND_ENGINE
+static struct wcd9xxx *sound_control_codec_ptr;
+static struct snd_soc_codec *direct_codec;
+static atomic_t kp_taiko_priv;
+struct wake_lock hph_playback_wake_lock;
+struct wake_lock spk_playback_wake_lock;
+#ifdef CONFIG_SAMSUNG_JACK_SYSFS
+extern int secjack_state;
+#endif
 
 #define MX_OUTPUT_MUTE 172
 /* Shared values for core resource locking */
@@ -565,30 +565,8 @@ u8 speaker_cached_gain;
  * TAIKO_A_CDC_TX3_VOL_CTL_GAIN
 */
 
-#if 0
-u8 iir1_cached_gain;
-u8 iir2_cached_gain;
-unsigned int mx_hw_eq = HWEQ_OFF;
-#endif
-#ifdef CONFIG_RAMP_VOLUME
-unsigned int ramp_volume;
-#endif
 static unsigned int headphone_mute;
 static unsigned int speaker_mute;
-#if 0
-static u8 iir1_enabled[BAND_MAX] = { 0, 0, 0, 0, 0 };
-static u8 iir1_band_1[BAND_MAX] = { 0, 0, 0, 0, 0 };
-static u8 iir1_band_2[BAND_MAX] = { 0, 0, 0, 0, 0 };
-static u8 iir1_band_3[BAND_MAX] = { 0, 0, 0, 0, 0 };
-static u8 iir1_band_4[BAND_MAX] = { 0, 0, 0, 0, 0 };
-static u8 iir1_band_5[BAND_MAX] = { 0, 0, 0, 0, 0 };
-static u8 iir2_enabled[BAND_MAX] = { 0, 0, 0, 0, 0 };
-static u8 iir2_band_1[BAND_MAX] = { 0, 0, 0, 0, 0 };
-static u8 iir2_band_2[BAND_MAX] = { 0, 0, 0, 0, 0 };
-static u8 iir2_band_3[BAND_MAX] = { 0, 0, 0, 0, 0 };
-static u8 iir2_band_4[BAND_MAX] = { 0, 0, 0, 0, 0 };
-static u8 iir2_band_5[BAND_MAX] = { 0, 0, 0, 0, 0 };
-#endif
 static u8 hphl_hpf_cutoff = 0;
 static u8 hphr_hpf_cutoff = 0;
 static u8 speaker_hpf_cutoff = 0;
@@ -1210,6 +1188,8 @@ static void update_control_regs(void)
 	write_chopper();
     write_autochopper(hph_autochopper);
 }
+
+#endif /*CONFIG_MXSOUND_ENGINE*/
 
 static int spkr_drv_wrnd = 1;
 
