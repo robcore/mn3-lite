@@ -5005,7 +5005,6 @@ static unsigned int taiko_is_digital_gain_register(unsigned int reg)
 		case TAIKO_A_CDC_TX9_VOL_CTL_GAIN:
 		case TAIKO_A_CDC_TX10_VOL_CTL_GAIN:
 			return 1;
-			break;
 		default:
 			break;
 	}
@@ -5047,6 +5046,17 @@ static int taiko_volatile(struct snd_soc_codec *ssc, unsigned int reg)
 	if (reg == TAIKO_A_RX_HPH_L_STATUS || reg == TAIKO_A_RX_HPH_R_STATUS)
 		return 1;
 
+	if (reg == TAIKO_A_CDC_RX1_B4_CTL || \
+    	reg == TAIKO_A_CDC_RX2_B4_CTL || \
+    	reg == TAIKO_A_CDC_RX7_B4_CTL || \
+    	reg == TAIKO_A_CDC_RX1_B5_CTL || \
+    	reg == TAIKO_A_CDC_RX2_B5_CTL || \
+    	reg == TAIKO_A_CDC_RX7_B5_CTL)
+        return 1;
+
+    if (reg == TAIKO_A_RX_HPH_CHOP_CTL)
+        return 1;
+
 	/* HPH PA Enable */
 	if (reg == TAIKO_A_RX_HPH_CNP_EN)
 		return 1;
@@ -5055,17 +5065,22 @@ static int taiko_volatile(struct snd_soc_codec *ssc, unsigned int reg)
 		return 1;
 
 	switch (reg) {
-	case TAIKO_A_CDC_SPKR_CLIPDET_VAL0:
-	case TAIKO_A_CDC_SPKR_CLIPDET_VAL1:
-	case TAIKO_A_CDC_SPKR_CLIPDET_VAL2:
-	case TAIKO_A_CDC_SPKR_CLIPDET_VAL3:
-	case TAIKO_A_CDC_SPKR_CLIPDET_VAL4:
-	case TAIKO_A_CDC_SPKR_CLIPDET_VAL5:
-	case TAIKO_A_CDC_SPKR_CLIPDET_VAL6:
-	case TAIKO_A_CDC_SPKR_CLIPDET_VAL7:
-	case TAIKO_A_CDC_VBAT_GAIN_MON_VAL:
-		return 1;
+    	case TAIKO_A_CDC_SPKR_CLIPDET_VAL0:
+        case TAIKO_A_CDC_SPKR_CLIPDET_VAL1:
+        case TAIKO_A_CDC_SPKR_CLIPDET_VAL2:
+        case TAIKO_A_CDC_SPKR_CLIPDET_VAL3:
+        case TAIKO_A_CDC_SPKR_CLIPDET_VAL4:
+        case TAIKO_A_CDC_SPKR_CLIPDET_VAL5:
+        case TAIKO_A_CDC_SPKR_CLIPDET_VAL6:
+        case TAIKO_A_CDC_SPKR_CLIPDET_VAL7:
+        case TAIKO_A_CDC_VBAT_GAIN_MON_VAL:
+            return 1;
+        default:
+            break;
 	}
+
+    if (reg == TAIKO_A_CDC_COMP1_B3_CTL || reg == TAIKO_A_CDC_COMP1_B2_CTL)
+        return 1;
 
 	for (i = 0; i < ARRAY_SIZE(audio_reg_cfg); i++)
 		if ((audio_reg_cfg[i].reg_logical_addr -
