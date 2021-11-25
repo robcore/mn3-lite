@@ -602,7 +602,6 @@ static unsigned int speaker_hdc = 0;
 #define TAIKO_A_RX_HPH_BIAS_CNP__POR (0x8A)
 */
 
-unsigned int anc_delay = 1;
 static unsigned int hph_autochopper = 0;
 static unsigned int chopper_bypass = 0;
 /*RMS (Root Mean Squared) Power Detector*/
@@ -8944,28 +8943,6 @@ static ssize_t rms_meter_resamp_fact_store(struct kobject *kobj,
 	return count;
 }
 
-static ssize_t anc_delay_show(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%u\n", anc_delay);
-}
-
-static ssize_t anc_delay_store(struct kobject *kobj,
-			   struct kobj_attribute *attr, const char *buf, size_t count)
-{
-	int uval;
-
-	sscanf(buf, "%d", &uval);
-
-	if (uval < 0)
-		uval = 0;
-	if (uval > 1)
-		uval = 1;
-
-	anc_delay = uval;
-	return count;
-}
-
 static struct kobj_attribute headphone_dac_enabled_attribute =
 	__ATTR(headphone_dac_enabled, 0444,
 		headphone_dac_enabled_show,
@@ -9086,11 +9063,6 @@ static struct kobj_attribute speaker_hdc_attribute =
 		speaker_hdc_show,
 		speaker_hdc_store);
 
-static struct kobj_attribute anc_delay_attribute =
-	__ATTR(anc_delay, 0644,
-		anc_delay_show,
-		anc_delay_store);
-
 static struct kobj_attribute headphone_left_hpf_cutoff_attribute =
 	__ATTR(headphone_left_hpf_cutoff, 0644,
 		headphone_left_hpf_cutoff_show,
@@ -9163,7 +9135,6 @@ static struct attribute *sound_control_attrs[] = {
 		&compander_gain_boost_attribute.attr,
 		&headphone_hdc_attribute.attr,
 		&speaker_hdc_attribute.attr,
-		&anc_delay_attribute.attr,
 		&headphone_left_hpf_cutoff_attribute.attr,
 		&headphone_right_hpf_cutoff_attribute.attr,
 		&speaker_hpf_cutoff_attribute.attr,

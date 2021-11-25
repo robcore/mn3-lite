@@ -68,12 +68,6 @@ busybox cat << CTAG
                 action:"soundcontrol highperfmode"
             }},
             { SCheckBox:{
-                label:"ANC Delay",
-                description:"Adds delay in ANC and Class AB Modes",
-                default:$(busybox cat /sys/kernel/sound_control/anc_delay),
-                action:"soundcontrol anc_delay"
-            }},
-            { SCheckBox:{
                 label:"UHQA Mode",
                 description:"Reduces effectiveness of the Chopper",
                 default:$(busybox cat /sys/kernel/sound_control/uhqa_mode),
