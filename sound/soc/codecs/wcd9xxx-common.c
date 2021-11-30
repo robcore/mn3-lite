@@ -423,7 +423,7 @@ wcd9xxx_enable_clsh_block(struct snd_soc_codec *codec,
 		clsh_d->clsh_users, enable);
 }
 
-extern unsigned int anc_delay;
+unsigned int anc_delay;
 static inline void wcd9xxx_enable_anc_delay(
 	struct snd_soc_codec *codec,
 	bool on)
