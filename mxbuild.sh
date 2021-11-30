@@ -940,6 +940,13 @@ do
 			break
 	    	;;
 
+	     -anc|--allnoclean)
+			checkrecov
+			handle_existing
+			build_all
+			break
+	    	;;
+
 	     -anp|--allnopush)
 			checkrecov
 			handle_existing
