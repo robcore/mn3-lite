@@ -9,9 +9,6 @@
  *
  */
 
-/* #define SEC_TOUCHKEY_DEBUG */
-/* #define SEC_TOUCHKEY_VERBOSE_DEBUG */
-
 #include <linux/kernel.h>
 #include <asm/unaligned.h>
 //#include <mach/cpufreq.h>
@@ -29,7 +26,9 @@
 #include <linux/platform_device.h>
 #include <linux/gpio.h>
 #include <linux/miscdevice.h>
+#ifdef CONFIG_HAS_EARLYSUSPEND
 #include <linux/earlysuspend.h>
+#endif
 #include <linux/i2c/touchkey_i2c.h>
 #include <linux/regulator/consumer.h>
 #include <asm/mach-types.h>
@@ -69,7 +68,7 @@
 
 #define CYPRESS_FW_ID_REG	0X05
 
-#define USE_OPEN_CLOSE
+#undef USE_OPEN_CLOSE
 #undef DO_NOT_USE_FUNC_PARAM
 
 #define KEYCODE_REG		0x00
@@ -689,7 +688,7 @@ static int tkey_fw_update(struct cypress_touchkey_info *info, bool force)
 		retry = 2;
 	else
 		retry = NUM_OF_RETRY_UPDATE;
-	
+
 #ifndef USE_SW_I2C
 	cypress_config_gpio_i2c(info->pdata, 0);
 #endif
@@ -702,7 +701,7 @@ static int tkey_fw_update(struct cypress_touchkey_info *info, bool force)
 		}
 		msleep(50);
 	}
-	
+
 #ifndef USE_SW_I2C
 	cypress_config_gpio_i2c(info->pdata, 1);
 #endif
@@ -814,65 +813,6 @@ static ssize_t cypress_touchkey_update_write(struct device *dev,
 	return size;
 }
 
-#if defined(CONFIG_SEC_KLIMT_PROJECT)
-static ssize_t cypress_touchkey_led(struct device *dev,
-				 struct device_attribute *attr, const char *buf,
-				 size_t size)
-{
-	struct cypress_touchkey_info *info = dev_get_drvdata(dev);
-	int data;
-	int ret;
-
-	ret = sscanf(buf, "%d", &data);
-
-	if (ret != 1) {
-		return size;
-	}
-
-	if (data != 0 && data != 1) {
-		return size;
-	}
-
-	if (info->pdata->vdd_led > 0) {
-		if (!info->enabled) {
-			touchled_cmd_reversed = 1;
-			goto out;
-		}
-	}
-
-	if (!info->vdd_led) {
-		info->vdd_led = regulator_get(&info->client->dev, "vdd_led");
-		if (IS_ERR(info->vdd_led)) {
-			goto out;
-		}
-
-		ret = regulator_set_voltage(info->vdd_led, 3300000, 3300000);
-		if (ret) {
-			goto out;
-		}
-	}
-
-	if (data) {
-		if (!regulator_is_enabled(info->vdd_led)) {
-			ret = regulator_enable(info->vdd_led);
-			if (ret) {
-				goto out;
-			}
-		}
-	} else {
-		if (regulator_is_enabled(info->vdd_led)) {
-			ret = regulator_disable(info->vdd_led); 
-			if (ret) {
-				goto out;
-			}
-		}
-	}
-
-	msleep(30);
-out:
-	return size;
-}
-#else
 static ssize_t cypress_touchkey_led_control(struct device *dev,
 				 struct device_attribute *attr, const char *buf,
 				 size_t size)
@@ -910,7 +850,6 @@ out:
 
 	return size;
 }
-#endif
 
 static ssize_t cypress_touchkey_sensitivity_control(struct device *dev,
 				struct device_attribute *attr, const char *buf,
@@ -1279,17 +1218,10 @@ static struct attribute *touchkey_attributes[] = {
 	&dev_attr_touchkey_firm_update.attr,
 	&dev_attr_brightness.attr,
 	&dev_attr_touch_sensitivity.attr,
-#if defined(CONFIG_SEC_KLIMT_PROJECT)
-	&dev_attr_touchkey_recent.attr,
-	&dev_attr_touchkey_recent_raw.attr,
-	&dev_attr_touchkey_idac3.attr,
-	&dev_attr_touchkey_back_raw.attr,
-#else
 	&dev_attr_touchkey_menu.attr,
 	&dev_attr_touchkey_raw_data0.attr,
 	&dev_attr_touchkey_idac0.attr,
 	&dev_attr_touchkey_raw_data1.attr,
-#endif
 	&dev_attr_touchkey_back.attr,
 	&dev_attr_touchkey_idac1.attr,
 	&dev_attr_touchkey_threshold.attr,
@@ -1946,7 +1878,7 @@ static void __exit cypress_touchkey_exit(void)
 	i2c_del_driver(&cypress_touchkey_driver);
 }
 
-module_init(cypress_touchkey_init);
+late_initcall(cypress_touchkey_init);
 module_exit(cypress_touchkey_exit);
 
 MODULE_DESCRIPTION("Touchkey driver for Cypress touchkey controller ");

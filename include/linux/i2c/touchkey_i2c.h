@@ -246,10 +246,6 @@ struct fw_image {
 #define ENABLE_FW_UPDATE //fw update after dtsi 02
 #endif
 
-#if defined(CONFIG_KEYBOARD_CYPRESS_TOUCHKEY_H)
-#define ENABLE_FW_UPDATE
-#endif
-
 struct cypress_touchkey_platform_data {
 	unsigned	gpio_led_en;
 	u32	touchkey_keycode[4];
@@ -314,16 +310,6 @@ struct cypress_touchkey_info {
 	bool enabled_1mm;
 #endif
 
-#if defined (CONFIG_SEC_DVFS) || defined (CONFIG_CPU_FREQ_LIMIT)
-	struct delayed_work	work_dvfs_off;
-	struct delayed_work	work_dvfs_chg;
-	struct mutex		dvfs_lock;
-	bool dvfs_lock_status;
-	int dvfs_old_stauts;
-	int dvfs_boost_mode;
-	int dvfs_freq;
-#endif
-
 #ifdef TK_INFORM_CHARGER
 	struct touchkey_callbacks callbacks;
 	bool charging_mode;
@@ -365,7 +351,7 @@ void touchkey_charger_infom(bool en);
 
 extern int coreriver_fw_update(struct cypress_touchkey_info *info, bool force);
 
-#define PM8921_IRQ_BASE			(NR_MSM_IRQS + NR_GPIO_IRQS)
+#define PM8921_IRQ_BASE (NR_MSM_IRQS + NR_GPIO_IRQS)
 #if defined(CONFIG_KEYBOARD_CYPRESS_TOUCHKEY_C)
 #define GPIO_TOUCHKEY_SDA	22
 #define GPIO_TOUCHKEY_SCL	23
