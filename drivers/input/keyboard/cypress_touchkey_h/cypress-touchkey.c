@@ -83,9 +83,6 @@
 #define FUNC_CALLED dev_notice(&info->client->dev, "%s: called.\n", __func__);
 */
 
-#define CYPRESS_SUPPORT_DUAL_INT_MODE
-#define TKEY_REQUEST_FW_UPDATE
-
 #ifdef USE_OPEN_CLOSE
 static int cypress_input_open(struct input_dev *dev);
 static void cypress_input_close(struct input_dev *dev);

@@ -257,6 +257,10 @@ struct fw_image {
 #define ENABLE_FW_UPDATE //fw update after dtsi 02
 #endif
 
+#if defined(CONFIG_KEYBOARD_CYPRESS_TOUCHKEY_H)
+#define ENABLE_FW_UPDATE
+#endif
+
 struct cypress_touchkey_platform_data {
 	unsigned	gpio_led_en;
 	u32	touchkey_keycode[4];
