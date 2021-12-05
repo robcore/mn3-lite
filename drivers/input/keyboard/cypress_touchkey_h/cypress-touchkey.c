@@ -632,6 +632,11 @@ void cypress_touchkey_flip_cover(struct cypress_touchkey_info *info, int value)
 }
 #endif
 
+unsigned int menu_disable = 0;	/* Debug message level */
+module_param(menu_disable, uint, 644);
+unsigned int back_disable = 0;	/* Debug message level */
+module_param(back_disable, uint, 644);
+
 static irqreturn_t cypress_touchkey_interrupt(int irq, void *dev_id)
 {
 	struct cypress_touchkey_info *info = dev_id;
@@ -659,9 +664,9 @@ static irqreturn_t cypress_touchkey_interrupt(int irq, void *dev_id)
 		u8 menu_press = menu_data % 2;
 		u8 back_press = back_data % 2;
 
-		if (menu_data)
+		if (menu_data && !menu_disable)
 			input_report_key(info->input_dev, info->keycode[0], menu_press);
-		if (back_data)
+		if (back_data && !back_disable)
 			input_report_key(info->input_dev, info->keycode[1], back_press);
 
 		press = menu_press | back_press;
