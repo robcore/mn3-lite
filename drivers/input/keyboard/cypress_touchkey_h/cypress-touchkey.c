@@ -9,7 +9,7 @@
  *
  */
 
-#define SEC_TOUCHKEY_DEBUG
+/* #define SEC_TOUCHKEY_DEBUG */
 /* #define SEC_TOUCHKEY_VERBOSE_DEBUG */
 
 #include <linux/kernel.h>
@@ -84,6 +84,9 @@
 #define FUNC_CALLED dev_notice(&info->client->dev, "%s: called.\n", __func__);
 */
 
+#define CYPRESS_SUPPORT_DUAL_INT_MODE
+#define TKEY_REQUEST_FW_UPDATE
+
 #ifdef USE_OPEN_CLOSE
 static int cypress_input_open(struct input_dev *dev);
 static void cypress_input_close(struct input_dev *dev);
@@ -125,94 +128,6 @@ static struct pm_gpio tkey_sleep_int = {
 	.function	= PM_GPIO_FUNC_NORMAL,
 	.inv_int_pol	= 0,
 };
-#endif
-
-#if defined (CONFIG_SEC_DVFS) || defined (CONFIG_CPU_FREQ_LIMIT)
-static void cypress_change_dvfs_lock(struct work_struct *work)
-{
-	struct cypress_touchkey_info *info =
-		container_of(work,
-			struct cypress_touchkey_info, work_dvfs_chg.work);
-	int retval = 0;
-	mutex_lock(&info->dvfs_lock);
-
-	retval = set_freq_limit(DVFS_TOUCH_ID, info->dvfs_freq);
-	if (retval < 0)
-		dev_dbg(&info->client->dev,
-			"%s: booster change failed(%d).\n",
-			__func__, retval);
-	info->dvfs_lock_status = false;
-	mutex_unlock(&info->dvfs_lock);
-}
-
-static void cypress_set_dvfs_off(struct work_struct *work)
-{
-	struct cypress_touchkey_info *info =
-		container_of(work,
-			struct cypress_touchkey_info, work_dvfs_off.work);
-	int retval;
-
-	mutex_lock(&info->dvfs_lock);
-	retval = set_freq_limit(DVFS_TOUCH_ID, -1);
-	if (retval < 0)
-		pr_debug("I am a fake print\n");
-
-	info->dvfs_lock_status = true;
-	mutex_unlock(&info->dvfs_lock);
-}
-
-static void cypress_set_dvfs_lock(struct cypress_touchkey_info *info,
-					uint32_t on)
-{
-	int ret = 0;
-	if (info->is_powering_on) {/*0603 - SMD issue*/
-		return;
-	}
-
-	if (info->dvfs_boost_mode == DVFS_STAGE_NONE) {
-		return;
-	}
-
-	mutex_lock(&info->dvfs_lock);
-	if (on == 0) {
-			cancel_delayed_work(&info->work_dvfs_chg);
-
-		if (info->dvfs_lock_status) {
-			ret = set_freq_limit(DVFS_TOUCH_ID, info->dvfs_freq);
-			if (ret < 0)
-				pr_debug("I am a fake print\n");
-			info->dvfs_lock_status = false;
-		}
-
-		schedule_delayed_work(&info->work_dvfs_off,
-			msecs_to_jiffies(TOUCH_BOOSTER_CHG_TIME));
-
-	} else if (on == 1) {
-		cancel_delayed_work(&info->work_dvfs_off);
-				schedule_delayed_work(&info->work_dvfs_chg,
-				msecs_to_jiffies(TOUCH_BOOSTER_OFF_TIME));
-
-	} else if (on == 2) {
-		if (info->dvfs_lock_status) {
-			cancel_delayed_work(&info->work_dvfs_off);
-			cancel_delayed_work(&info->work_dvfs_chg);
-			schedule_work(&info->work_dvfs_off.work);
-		}
-	}
-	mutex_unlock(&info->dvfs_lock);
-}
-
-static void cypress_init_dvfs(struct cypress_touchkey_info *info)
-{
-	mutex_init(&info->dvfs_lock);
-	info->dvfs_boost_mode = DVFS_STAGE_DUAL;
-	info->dvfs_freq = MIN_TOUCH_LIMIT_SECOND;
-
-	INIT_DELAYED_WORK(&info->work_dvfs_off, cypress_set_dvfs_off);
-	INIT_DELAYED_WORK(&info->work_dvfs_chg, cypress_change_dvfs_lock);
-
-	info->dvfs_lock_status = true;
-}
 #endif
 
 static int cypress_touchkey_i2c_read(struct i2c_client *client,
@@ -771,9 +686,6 @@ static irqreturn_t cypress_touchkey_interrupt(int irq, void *dev_id)
 	}
 
 	input_sync(info->input_dev);
-#if defined (CONFIG_SEC_DVFS) || defined (CONFIG_CPU_FREQ_LIMIT)
-	cypress_set_dvfs_lock(info, !!press);
-#endif
 
 out:
 	return IRQ_HANDLED;
@@ -1360,39 +1272,6 @@ static ssize_t cypress_touchkey_flip_cover_mode_enable(struct device *dev,
 }
 #endif
 
-
-#if defined (CONFIG_SEC_DVFS) || defined (CONFIG_CPU_FREQ_LIMIT)
-static ssize_t boost_level_store(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t count)
-{
-	struct cypress_touchkey_info *info = dev_get_drvdata(dev);
-	int val, retval;
-
-	sscanf(buf, "%d", &val);
-
-	if (val != 1 && val != 2 && val != 0) {
-		dev_dbg(&info->client->dev,
-			"%s: wrong cmd %d\n", __func__, val);
-		return count;
-	}
-	info->dvfs_boost_mode = val;
-
-	if (info->dvfs_boost_mode == DVFS_STAGE_DUAL) {
-		info->dvfs_freq = MIN_TOUCH_LIMIT_SECOND;
-	} else if (info->dvfs_boost_mode == DVFS_STAGE_SINGLE) {
-		info->dvfs_freq = MIN_TOUCH_LIMIT;
-	} else if (info->dvfs_boost_mode == DVFS_STAGE_NONE) {
-		info->dvfs_freq = -1;
-		retval = set_freq_limit(DVFS_TOUCH_ID, -1);
-		if (retval < 0) {
-			info->dvfs_lock_status = false;
-		}
-	}
-	return count;
-}
-#endif
-
 static DEVICE_ATTR(touchkey_firm_update_status, S_IRUGO | S_IWUSR | S_IWGRP,
 		cypress_touchkey_firm_status_show, NULL);
 static DEVICE_ATTR(touchkey_firm_version_panel, S_IRUGO,
@@ -1451,10 +1330,6 @@ static DEVICE_ATTR(glove_mode, S_IRUGO | S_IWUSR | S_IWGRP, NULL,
 static DEVICE_ATTR(flip_mode, S_IRUGO | S_IWUSR | S_IWGRP, NULL,
 		cypress_touchkey_flip_cover_mode_enable);
 #endif
-#if defined (CONFIG_SEC_DVFS) || defined (CONFIG_CPU_FREQ_LIMIT)
-static DEVICE_ATTR(boost_level,
-		   S_IWUSR | S_IWGRP, NULL, boost_level_store);
-#endif
 
 static struct attribute *touchkey_attributes[] = {
 	&dev_attr_touchkey_firm_update_status.attr,
@@ -1488,9 +1363,6 @@ static struct attribute *touchkey_attributes[] = {
 #endif
 #ifdef TKEY_FLIP_MODE
 	&dev_attr_flip_mode.attr,
-#endif
-#if defined (CONFIG_SEC_DVFS) || defined (CONFIG_CPU_FREQ_LIMIT)
-	&dev_attr_boost_level.attr,
 #endif
 	NULL,
 };
@@ -1773,12 +1645,12 @@ static void tkey_check_ic(struct cypress_touchkey_info *info)
 		if (ret == 0)
 			info->touchkeyid = CORERIVER_TOUCHKEY;
 		else
-			info->touchkeyid =CYPRESS_TOUCHKEY;
+			info->touchkeyid = CYPRESS_TOUCHKEY;
 	}
 
-//TEST
-	info->touchkeyid =CYPRESS_TOUCHKEY;
-//TEST
+	info->touchkeyid = CYPRESS_TOUCHKEY;
+	dev_info(&info->client->dev, "touchkey id = %s\n",
+			info->touchkeyid ? "CYPRESS" : "CORERIVER");
 }
 
 static int __devinit cypress_touchkey_probe(struct i2c_client *client,
@@ -1853,12 +1725,12 @@ static int __devinit cypress_touchkey_probe(struct i2c_client *client,
 		cypress_touchkey_con_hw(info, true);
 	cypress_power_onoff(info, 1);
 
-	msleep(150);
-
+	msleep(40);
+	
 	tkey_check_ic(info);
 
 	if (info->touchkeyid == CORERIVER_TOUCHKEY)
-		msleep(50);
+		msleep(160);
 
 	info->enabled = true;
 	ret = tkey_i2c_check(info);
@@ -1881,10 +1753,6 @@ static int __devinit cypress_touchkey_probe(struct i2c_client *client,
 #ifdef USE_OPEN_CLOSE
 	input_dev->open = cypress_input_open;
 	input_dev->close = cypress_input_close;
-#endif
-
-#if defined (CONFIG_SEC_DVFS) || defined (CONFIG_CPU_FREQ_LIMIT)
-	cypress_init_dvfs(info);
 #endif
 
 	ret = request_threaded_irq(client->irq, NULL,
@@ -2002,13 +1870,8 @@ static int cypress_touchkey_suspend(struct device *dev)
 	struct cypress_touchkey_info *info = i2c_get_clientdata(client);
 	int ret = 0;
 
-#if defined (CONFIG_SEC_DVFS) || defined (CONFIG_CPU_FREQ_LIMIT)
-	cypress_set_dvfs_lock(info, 2);
-
-#endif
 	info->is_powering_on = true;
-	if (!pm_runtime_status_suspended(dev))
-		disable_irq(info->irq);
+	disable_irq(info->irq);
 	if (info->pdata->gpio_led_en)
 		cypress_touchkey_con_hw(info, false);
 	cypress_power_onoff(info, 0);	
@@ -2024,7 +1887,7 @@ static int cypress_touchkey_resume(struct device *dev)
 	cypress_power_onoff(info, 1);
 	if (info->pdata->gpio_led_en)
 		cypress_touchkey_con_hw(info, true);
-	msleep(150);
+	msleep(50);
 
 	if (info->touchkeyid == CYPRESS_TOUCHKEY) {
 #ifdef CYPRESS_SUPPORT_DUAL_INT_MODE
@@ -2034,7 +1897,7 @@ static int cypress_touchkey_resume(struct device *dev)
 		info->enabled = true;
 		cypress_touchkey_auto_cal(info, false);
 	} else {
-		msleep(50);
+		msleep(150);	
 		info->enabled = true;
 	}
 
@@ -2045,8 +1908,7 @@ static int cypress_touchkey_resume(struct device *dev)
 		msleep(30);
 	}
 
-	if (!pm_runtime_status_suspended(dev))
-		enable_irq(info->irq);
+	enable_irq(info->irq);
 
 	info->is_powering_on = false;
 	return ret;

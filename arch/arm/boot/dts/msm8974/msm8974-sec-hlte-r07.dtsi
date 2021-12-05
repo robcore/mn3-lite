@@ -119,21 +119,22 @@
             interrupts = <29 0>;
             vdd_led-supply = <&pm8941_l13>;
             vcc_en-supply = <&pm8941_lvs3>;
-            cypress,scl-gpio = <&msmgpio 96 0x00>;
             cypress,sda-gpio = <&msmgpio 95 0x00>;
+            cypress,scl-gpio = <&msmgpio 96 0x00>;
             cypress,irq-gpio = <&pm8941_gpios 29 0x01>;
             cypress,touchkey_id-gpio = <&msmgpio 101 0x00>;
             cypress,tkey-keycodes = <139 158>;
             cypress,i2c-pull-up = <1>;
+            cypress,fw_update_flag = <1>;
         };
     };
 
     i2c@22 {
-        #address-cells = <1>;
-        #size-cells = <0>;
         cell-index = <22>;
         compatible = "i2c-gpio";
         gpios = <&msmgpio 109 0x00>, <&msmgpio 108 0x00>;
+        #address-cells = <1>;
+        #size-cells = <0>;
 
         barcode_emul_ice4@19 {
             compatible = "barcode_hlte,barcode_emul_hlte";
