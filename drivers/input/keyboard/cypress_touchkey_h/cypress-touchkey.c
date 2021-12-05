@@ -34,7 +34,6 @@
 #include <linux/regulator/consumer.h>
 #include <asm/mach-types.h>
 #include <linux/device.h>
-#include <linux/pm_runtime.h>
 /* #include <mach/msm8974-gpio.h> */
 #include <linux/of_gpio.h>
 #include <linux/firmware.h>
