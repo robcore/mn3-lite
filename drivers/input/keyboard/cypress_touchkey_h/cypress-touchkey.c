@@ -171,56 +171,6 @@ static int cypress_touchkey_i2c_write(struct i2c_client *client,
 	return err;
 }
 
-#ifdef CYPRESS_SUPPORT_DUAL_INT_MODE
-static void cypress_touchkey_interrupt_set_dual(struct i2c_client *client)
-{
-	struct cypress_touchkey_info *info = dev_get_drvdata(&client->dev);
-	int ret = 0;
-	int retry = 5;
-	u8 data[3] = {0, };
-
-	if (info->touchkeyid != CYPRESS_TOUCHKEY) { /* support CYPRESS only */
-		return;
-	}
-
-	if (info->ic_fw_ver < CYPRESS_RECENT_BACK_REPORT_FW_VER) {
-		return;
-	}
-
-	while (retry--) {
-		data[0] = TK_CMD_DUAL_DETECTION;
-		data[1] = 0x00;
-		data[2] = TK_BIT_DETECTION_CONFIRM;
-
-		ret = i2c_smbus_write_i2c_block_data(client, TK_CMD_INTERRUPT_SET_REG, 3, &data[0]);
-		if (ret < 0) {
-			msleep(30);
-			continue;
-		}
-		msleep(30);
-
-		data[0] = CYPRESS_DETECTION_FLAG;
-
-		ret = i2c_smbus_read_i2c_block_data(client, data[0], 1, &data[1]);
-		if (ret < 0) {
-			dev_dbg(&client->dev, "%s: i2c read error. (%d)\n", __func__, ret);
-			msleep(30);
-			continue;
-		}
-
-		if (data[1] != 1) {
-			dev_dbg(&client->dev,
-				"%s: interrupt set: 0x%X, failed.\n", __func__, data[1]);
-			continue;
-		}
-
-		dev_dbg(&client->dev, "%s: interrupt set: 0x%X\n", __func__, data[1]);
-		break;
-	}
-
-}
-#endif
-
 static int tkey_i2c_check(struct cypress_touchkey_info *info)
 {
 	struct i2c_client *client = info->client;
@@ -238,12 +188,6 @@ static int tkey_i2c_check(struct cypress_touchkey_info *info)
 	info->module_ver = data[2];
 	dev_dbg(&client->dev, "%s: ic_fw_ver = %x, module_ver = %x \n",
 		__func__, info->ic_fw_ver, info->module_ver);
-
-#ifdef CYPRESS_SUPPORT_DUAL_INT_MODE
-	/* CYPRESS Firmware setting interrupt type : dual or single interrupt */
-	cypress_touchkey_interrupt_set_dual(info->client);
-#endif
-
 	return ret;
 }
 
@@ -772,10 +716,6 @@ static int tkey_fw_update(struct cypress_touchkey_info *info, bool force)
 	info->ic_fw_ver = i2c_smbus_read_byte_data(info->client,
 			CYPRESS_FW_VER);
 
-#ifdef CYPRESS_SUPPORT_DUAL_INT_MODE
-	/* CYPRESS Firmware setting interrupt type : dual or single interrupt */
-	cypress_touchkey_interrupt_set_dual(info->client);
-#endif
 	return ret;
 }
 
@@ -1891,10 +1831,6 @@ static int cypress_touchkey_resume(struct device *dev)
 	msleep(50);
 
 	if (info->touchkeyid == CYPRESS_TOUCHKEY) {
-#ifdef CYPRESS_SUPPORT_DUAL_INT_MODE
-	/* CYPRESS Firmware setting interrupt type : dual or single interrupt */
-		cypress_touchkey_interrupt_set_dual(info->client);
-#endif
 		info->enabled = true;
 		cypress_touchkey_auto_cal(info, false);
 	} else {
